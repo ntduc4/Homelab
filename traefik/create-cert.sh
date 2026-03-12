@@ -1,7 +1,7 @@
 #!/bin/bash
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-source "$SCRIPT_DIR/../../.env"
+source "$SCRIPT_DIR/.env"
 mkdir -p "$SCRIPT_DIR/certs"
 
 openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \

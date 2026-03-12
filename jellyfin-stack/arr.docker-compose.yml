@@ -2,40 +2,9 @@ name: plex-server
 
 networks:
   proxy:
-    name: proxy
+    external: true
 
 services:
-  traefik:
-    image: traefik:latest
-    container_name: traefik
-    restart: unless-stopped
-    command:
-      - "--api.dashboard=true"
-      # - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=proxy"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-    ports:
-      - "80:80"
-      - "443:443"
-      # - "8080:8080"                     # Traefik dashboard -> traefik.local
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./config/traefik:/traefik
-      - ./config/traefik/certs:/certs
-    networks:
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.${PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls=true"
-      - "traefik.http.routers.traefik.service=api@internal"
-
   gluetun:
     image: qmcgaw/gluetun:latest
     container_name: gluetun
@@ -62,8 +31,6 @@ services:
       - 8989:8989
       # prowlarr
       - 9696:9696
-      # jellyseerr
-      - 5055:5055
       # flaresolverr
       - "${PORT:-8191}:8191"
       # readarr
@@ -108,13 +75,6 @@ services:
       - "traefik.http.routers.prowlarr.tls=true"
       - "traefik.http.routers.prowlarr.service=prowlarr"
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
-
-      # Jellyseerr -> seerr.local
-      - "traefik.http.routers.seerr.rule=Host(`seerr.${PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.seerr.entrypoints=websecure"
-      - "traefik.http.routers.seerr.tls=true"
-      - "traefik.http.routers.seerr.service=seerr"
-      - "traefik.http.services.seerr.loadbalancer.server.port=5055"
 
       # Bazarr -> bazarr.local
       - "traefik.http.routers.bazarr.rule=Host(`bazarr.${PUBLIC_DOMAIN}`)"
@@ -213,48 +173,6 @@ services:
       - ./config/bazarr:/config
       - ${MEDIA_PATH}/movies:/movies
       - ${MEDIA_PATH}/tv:/tv
-    restart: unless-stopped
-    depends_on:
-      - gluetun
-
-  jellyfin:
-    image: jellyfin/jellyfin:latest
-    container_name: jellyfin
-    user: 1000:1000
-    ports:
-      - 8096:8096/tcp
-      - 7359:7359/udp
-    volumes:
-      - ./config/jellyfin:/config
-      - ./jelly-cache:/cache
-      - ${MEDIA_PATH}:/media
-    networks:
-      - proxy
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.jellyfin.entrypoints=websecure"
-      - "traefik.http.routers.jellyfin.tls=true"
-      - "traefik.http.services.jellyfin.loadbalancer.server.port=8096"
-
-  jellyseerr:
-    image: ghcr.io/fallenbagel/jellyseerr:latest
-    init: true
-    network_mode: "service:gluetun"
-    container_name: jellyseerr
-    environment:
-      - LOG_LEVEL=debug
-      - TZ=Asia/Tashkent
-      - PORT=5055
-    volumes:
-      - ./config/seerr:/app/config
-    healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:5055/api/v1/status || exit 1
-      start_period: 20s
-      timeout: 3s
-      interval: 15s
-      retries: 3
     restart: unless-stopped
     depends_on:
       - gluetun
