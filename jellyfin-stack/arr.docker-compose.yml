@@ -1,4 +1,4 @@
-name: plex-server
+name: arr-stack
 
 networks:
   proxy:

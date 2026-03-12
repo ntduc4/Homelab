@@ -1,3 +1,5 @@
+name: nextcloud-stack
+
 networks:
   proxy:
     external: true
@@ -46,6 +48,8 @@ services:
       - extra_params=--o:ssl.enable=false --o:ssl.termination=true
     networks:
       - proxy
+    extra_hosts:
+      - "nextcloud.${PUBLIC_DOMAIN}:172.19.0.2"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
