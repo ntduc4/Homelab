@@ -21,6 +21,8 @@ services:
       - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
       - "--providers.file.directory=/traefik"
       - "--providers.file.watch=true"
+      - "--accesslog=true"
+      - "--log.level=INFO"
     ports:
       - "80:80"
       - "443:443"

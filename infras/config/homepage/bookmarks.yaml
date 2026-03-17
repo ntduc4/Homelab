@@ -1,0 +1,30 @@
+---
+- Developer:
+    - GitHub:
+        - abbr: GH
+          href: https://github.com
+
+    - HardwareZone:
+        - abbr: HWZ
+          href: https://forums.hardwarezone.com.sg
+
+    - TRaSH Guides:
+        - abbr: TG
+          href: https://trash-guides.info
+
+    - Carousell:
+        - abbr: CS
+          href: https://www.carousell.sg
+
+- Docs:
+    - Traefik Docs:
+        - abbr: TR
+          href: https://doc.traefik.io/traefik
+
+    - Homepage Docs:
+        - abbr: HP
+          href: https://gethomepage.dev
+
+    - Portainer Docs:
+        - abbr: PT
+          href: https://docs.portainer.io

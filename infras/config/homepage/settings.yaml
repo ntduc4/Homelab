@@ -1,0 +1,33 @@
+---
+title: my homelab
+description: Home Lab Dashboard
+
+color: slate
+theme: dark
+
+headerStyle: clean
+
+language: en
+
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: false
+  showSearchSuggestions: true
+
+layout:
+  Media:
+    style: row
+    columns: 4
+    icon: mdi-play-circle
+  Downloads:
+    style: row
+    columns: 2
+    icon: mdi-download-circle
+  Infrastructure:
+    style: row
+    columns: 2
+    icon: mdi-server
+  Productivity:
+    style: row
+    columns: 2
+    icon: mdi-briefcase

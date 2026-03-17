@@ -10,9 +10,14 @@ services:
     container_name: dozzle
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/dozzle:/data
     networks:
       - proxy
+    environment:
+      - DOZZLE_ENABLE_ACTIONS=true
+      - DOZZLE_ENABLE_SHELL=true
+      - DOZZLE_AUTH_PROVIDER=simple
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
@@ -31,9 +36,19 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro # (optional) For docker integrations
       - ${DATA_PATH}:/data:ro
     environment:
-      HOMEPAGE_ALLOWED_HOSTS: "homepage.${PUBLIC_DOMAIN}" # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
-    # extra_hosts:
-    #   - "nextcloud.${PUBLIC_DOMAIN}:172.19.0.2"
+      HOMEPAGE_ALLOWED_HOSTS: "homepage.${PUBLIC_DOMAIN},${PUBLIC_DOMAIN}" # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
+      HOMEPAGE_VAR_DOMAIN: "${PUBLIC_DOMAIN}"
+      HOMEPAGE_VAR_JELLYSEERR_KEY: "${HOMEPAGE_VAR_JELLYSEERR_KEY}"
+      HOMEPAGE_VAR_JELLYFIN_KEY: "${HOMEPAGE_VAR_JELLYFIN_KEY}"
+      HOMEPAGE_VAR_SONARR_KEY: "${HOMEPAGE_VAR_SONARR_KEY}"
+      HOMEPAGE_VAR_RADARR_KEY: "${HOMEPAGE_VAR_RADARR_KEY}"
+      HOMEPAGE_VAR_PROWLARR_KEY: "${HOMEPAGE_VAR_PROWLARR_KEY}"
+      HOMEPAGE_VAR_QBIT_USERNAME: "${HOMEPAGE_VAR_QBIT_USERNAME}"
+      HOMEPAGE_VAR_QBIT_PASSWORD: "${HOMEPAGE_VAR_QBIT_PASSWORD}"
+      # HOMEPAGE_VAR_PORTAINER_KEY: "${HOMEPAGE_VAR_PORTAINER_KEY}"
+      HOMEPAGE_VAR_NEXTCLOUD_USERNAME: "${HOMEPAGE_VAR_NEXTCLOUD_USERNAME}"
+      HOMEPAGE_VAR_NEXTCLOUD_PASSWORD: "${HOMEPAGE_VAR_NEXTCLOUD_PASSWORD}"
+      HOMEPAGE_VAR_IMMICH_KEY: "${HOMEPAGE_VAR_IMMICH_KEY}"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
@@ -42,19 +57,19 @@ services:
       - "traefik.http.routers.homepage.tls=true"
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
 
-  portainer:
-    container_name: portainer
-    image: portainer/portainer-ce:latest
-    command: --http-enabled
-    networks:
-      - proxy
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./config/portainer:/data
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.${PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.portainer.entrypoints=websecure"
-      - "traefik.http.routers.portainer.tls=true"
-      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
+  # portainer:
+  #   container_name: portainer
+  #   image: portainer/portainer-ce:latest
+  #   command: --http-enabled
+  #   networks:
+  #     - proxy
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ./config/portainer:/data
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.docker.network=proxy"
+  #     - "traefik.http.routers.portainer.rule=Host(`portainer.${PUBLIC_DOMAIN}`)"
+  #     - "traefik.http.routers.portainer.entrypoints=websecure"
+  #     - "traefik.http.routers.portainer.tls=true"
+  #     - "traefik.http.services.portainer.loadbalancer.server.port=9000"
