@@ -10,7 +10,7 @@ services:
     container_name: traefik
     restart: unless-stopped
     command:
-      # - "--api.insecure=true"
+      - "--api.insecure=true"
       - "--api.dashboard=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"

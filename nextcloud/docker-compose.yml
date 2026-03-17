@@ -74,7 +74,7 @@ services:
       - MYSQL_USER=nextcloud
       - MYSQL_PASSWORD=${NC_MYSQL_PASSWORD}
       - MYSQL_DATABASE=nextcloud
-      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${PUBLIC_DOMAIN}
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${PUBLIC_DOMAIN} nextcloud-app
       - OVERWRITEPROTOCOL=https
       - NEXTCLOUD_HOSTNAME=nextcloud.${PUBLIC_DOMAIN}
       - NC_default_phone_region=SG
