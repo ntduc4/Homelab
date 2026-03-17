@@ -67,16 +67,6 @@
           type: traefik
           url: http://traefik:8080
 
-    # - Portainer:
-    #     icon: portainer.png
-    #     href: https://portainer.{{HOMEPAGE_VAR_DOMAIN}}
-    #     description: Container Management
-    #     widget:
-    #       type: portainer
-    #       url: http://portainer:9000
-    #       env: 3
-    #       key: {{HOMEPAGE_VAR_PORTAINER_KEY}}
-
     - Dozzle:
         icon: dozzle.png
         href: https://dozzle.{{HOMEPAGE_VAR_DOMAIN}}

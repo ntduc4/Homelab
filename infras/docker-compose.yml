@@ -45,7 +45,6 @@ services:
       HOMEPAGE_VAR_PROWLARR_KEY: "${HOMEPAGE_VAR_PROWLARR_KEY}"
       HOMEPAGE_VAR_QBIT_USERNAME: "${HOMEPAGE_VAR_QBIT_USERNAME}"
       HOMEPAGE_VAR_QBIT_PASSWORD: "${HOMEPAGE_VAR_QBIT_PASSWORD}"
-      # HOMEPAGE_VAR_PORTAINER_KEY: "${HOMEPAGE_VAR_PORTAINER_KEY}"
       HOMEPAGE_VAR_NEXTCLOUD_USERNAME: "${HOMEPAGE_VAR_NEXTCLOUD_USERNAME}"
       HOMEPAGE_VAR_NEXTCLOUD_PASSWORD: "${HOMEPAGE_VAR_NEXTCLOUD_PASSWORD}"
       HOMEPAGE_VAR_IMMICH_KEY: "${HOMEPAGE_VAR_IMMICH_KEY}"
@@ -56,20 +55,3 @@ services:
       - "traefik.http.routers.homepage.entrypoints=websecure"
       - "traefik.http.routers.homepage.tls=true"
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
-
-  # portainer:
-  #   container_name: portainer
-  #   image: portainer/portainer-ce:latest
-  #   command: --http-enabled
-  #   networks:
-  #     - proxy
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #     - ./config/portainer:/data
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.docker.network=proxy"
-  #     - "traefik.http.routers.portainer.rule=Host(`portainer.${PUBLIC_DOMAIN}`)"
-  #     - "traefik.http.routers.portainer.entrypoints=websecure"
-  #     - "traefik.http.routers.portainer.tls=true"
-  #     - "traefik.http.services.portainer.loadbalancer.server.port=9000"
