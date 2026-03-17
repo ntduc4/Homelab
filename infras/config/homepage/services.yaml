@@ -13,7 +13,7 @@
 
     - Jellyseerr:
         icon: jellyseerr.png
-        href: https://jellyseerr.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://seerr.{{HOMEPAGE_VAR_DOMAIN}}
         description: Media Requests
         widget:
           type: jellyseerr
@@ -41,7 +41,7 @@
 - Downloads:
     - qBittorrent:
         icon: qbittorrent.png
-        href: https://qbittorrent.{{HOMEPAGE_VAR_DOMAIN}}
+        href: https://qbit.{{HOMEPAGE_VAR_DOMAIN}}
         description: Torrent Client
         widget:
           type: qbittorrent
