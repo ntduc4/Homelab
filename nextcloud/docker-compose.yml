@@ -43,17 +43,17 @@ services:
     container_name: nextcloud-collabora
     restart: unless-stopped
     environment:
-      - aliasgroup1=https://nextcloud.${PUBLIC_DOMAIN}
+      - aliasgroup1=https://nextcloud.${TAILSCALE_DOMAIN},https://nextcloud.${EXTERNAL_DOMAIN}
       - DONT_GEN_SSL_CERT=YES
       - extra_params=--o:ssl.enable=false --o:ssl.termination=true
     networks:
       - proxy
     extra_hosts:
-      - "nextcloud.${PUBLIC_DOMAIN}:172.19.0.2"
+      - "nextcloud.${TAILSCALE_DOMAIN}:172.19.0.2"
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.collabora.rule=Host(`collabora.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.collabora.rule=Host(`collabora.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.collabora.entrypoints=websecure"
       - "traefik.http.routers.collabora.tls=true"
       - "traefik.http.services.collabora.loadbalancer.server.port=9980"
@@ -74,9 +74,9 @@ services:
       - MYSQL_USER=nextcloud
       - MYSQL_PASSWORD=${NC_MYSQL_PASSWORD}
       - MYSQL_DATABASE=nextcloud
-      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${PUBLIC_DOMAIN} nextcloud-app
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${TAILSCALE_DOMAIN} nextcloud-app nextcloud.${EXTERNAL_DOMAIN}
       - OVERWRITEPROTOCOL=https
-      - NEXTCLOUD_HOSTNAME=nextcloud.${PUBLIC_DOMAIN}
+      - NEXTCLOUD_HOSTNAME=nextcloud.${TAILSCALE_DOMAIN}
       - NC_default_phone_region=SG
       - IMAGINARY_HOST=nextcloud-imaginary
     volumes:
@@ -88,7 +88,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls=true"
       - "traefik.http.routers.nextcloud.service=nextcloud"
