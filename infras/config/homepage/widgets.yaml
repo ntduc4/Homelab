@@ -7,6 +7,7 @@
     disk:
       - /
       - /data
+      - /jelly-data
 
 - search:
     provider: duckduckgo

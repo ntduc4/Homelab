@@ -12,6 +12,10 @@ services:
     ports:
       - 8096:8096/tcp
       - 7359:7359/udp
+    devices:
+      - /dev/dri/renderD128:/dev/dri/renderD128
+    group_add:
+      - "992"
     volumes:
       - ./config/jellyfin:/config
       - ./jelly-cache:/cache
