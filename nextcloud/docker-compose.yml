@@ -53,7 +53,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.collabora.rule=Host(`collabora.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.collabora.rule=Host(`collabora.${TAILSCALE_DOMAIN}`) || Host(`collabora.${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.collabora.entrypoints=websecure"
       - "traefik.http.routers.collabora.tls=true"
       - "traefik.http.services.collabora.loadbalancer.server.port=9980"
@@ -88,7 +88,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${TAILSCALE_DOMAIN}`) || Host(`nextcloud.${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls=true"
       - "traefik.http.routers.nextcloud.service=nextcloud"
