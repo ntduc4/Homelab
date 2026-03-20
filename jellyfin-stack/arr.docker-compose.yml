@@ -171,8 +171,7 @@ services:
       - PGID=1000
     volumes:
       - ./config/bazarr:/config
-      - ${MEDIA_PATH}/movies:/movies
-      - ${MEDIA_PATH}/tv:/tv
+      - ${MEDIA_PATH}:/media
     restart: unless-stopped
     depends_on:
       - gluetun

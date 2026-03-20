@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # dcm.sh — Docker Compose Manager
-# Usage: dcm.sh <up|down> [stack_name]
+# Usage: dcm.sh <up|down|restart> [stack_name]
 
 set -euo pipefail
 
@@ -38,11 +38,12 @@ BOLD='\033[1m'
 RESET='\033[0m'
 
 usage() {
-    echo -e "${BOLD}Usage:${RESET} $(basename "$0") <up|down> [stack]"
+    echo -e "${BOLD}Usage:${RESET} $(basename "$0") <up|down|restart> [stack]"
     echo
     echo -e "${BOLD}Commands:${RESET}"
-    echo -e "  up    Start all stacks (or a specific one)"
-    echo -e "  down  Stop all stacks (or a specific one)"
+    echo -e "  up       Start all stacks (or a specific one)"
+    echo -e "  down     Stop all stacks (or a specific one)"
+    echo -e "  restart  Down then up all stacks (or a specific one)"
     echo
     echo -e "${BOLD}Available stacks:${RESET}"
     for key in "${!STACK_DIRS[@]}"; do
@@ -57,6 +58,8 @@ usage() {
     echo -e "  $(basename "$0") up"
     echo -e "  $(basename "$0") down jellyfin"
     echo -e "  $(basename "$0") up nextcloud"
+    echo -e "  $(basename "$0") restart"
+    echo -e "  $(basename "$0") restart arr"
     exit 1
 }
 
@@ -112,14 +115,20 @@ stack_down() {
     echo -e "  ${YELLOW}✓ Stopped${RESET}"
 }
 
+stack_restart() {
+    local name="$1"
+    echo -e "\n${CYAN}↺ Restarting${RESET} ${BOLD}${name}${RESET}"
+    stack_down "$name" && stack_up "$name"
+}
+
 # ─── Arg parsing ──────────────────────────────────────────────────────────────
 [[ $# -lt 1 ]] && usage
 
 COMMAND="$1"
 TARGET="${2:-}"
 
-[[ "$COMMAND" != "up" && "$COMMAND" != "down" ]] && {
-    echo -e "${RED}Error:${RESET} command must be 'up' or 'down'"
+[[ "$COMMAND" != "up" && "$COMMAND" != "down" && "$COMMAND" != "restart" ]] && {
+    echo -e "${RED}Error:${RESET} command must be 'up', 'down', or 'restart'"
     usage
 }
 
@@ -130,23 +139,38 @@ if [[ -n "$TARGET" ]]; then
         echo -e "Run $(basename "$0") without args to see available stacks."
         exit 1
     fi
-    [[ "$COMMAND" == "up" ]] && stack_up "$TARGET" || stack_down "$TARGET"
+    case "$COMMAND" in
+        up)      stack_up "$TARGET" ;;
+        down)    stack_down "$TARGET" ;;
+        restart) stack_restart "$TARGET" ;;
+    esac
 else
     # All stacks — respect explicit order
-    if [[ "$COMMAND" == "down" ]]; then
-        mapfile -t ORDER < <(printf '%s\n' "${STACK_ORDER[@]}" | tac)
-    else
-        ORDER=("${STACK_ORDER[@]}")
-    fi
-
     FAILED=()
-    for name in "${ORDER[@]}"; do
-        if [[ "$COMMAND" == "up" ]]; then
-            stack_up "$name" || FAILED+=("$name")
-        else
+
+    if [[ "$COMMAND" == "restart" ]]; then
+        # Down in reverse order, then up in forward order
+        echo -e "${CYAN}↺ Restarting all stacks${RESET}"
+
+        mapfile -t DOWN_ORDER < <(printf '%s\n' "${STACK_ORDER[@]}" | tac)
+        for name in "${DOWN_ORDER[@]}"; do
+            stack_down "$name" || FAILED+=("$name (down)")
+        done
+
+        echo
+        for name in "${STACK_ORDER[@]}"; do
+            stack_up "$name" || FAILED+=("$name (up)")
+        done
+    elif [[ "$COMMAND" == "down" ]]; then
+        mapfile -t ORDER < <(printf '%s\n' "${STACK_ORDER[@]}" | tac)
+        for name in "${ORDER[@]}"; do
             stack_down "$name" || FAILED+=("$name")
-        fi
-    done
+        done
+    else
+        for name in "${STACK_ORDER[@]}"; do
+            stack_up "$name" || FAILED+=("$name")
+        done
+    fi
 
     echo
     if [[ ${#FAILED[@]} -gt 0 ]]; then

@@ -38,6 +38,15 @@
           url: http://gluetun:7878
           key: {{HOMEPAGE_VAR_RADARR_KEY}}
 
+    - Bazarr:
+        icon: bazarr.png
+        href: https://bazarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Subtitles
+        widget:
+          type: bazarr
+          url: http://gluetun:6767
+          key: {{HOMEPAGE_VAR_BAZARR_KEY}}
+
 - Downloads:
     - qBittorrent:
         icon: qbittorrent.png
@@ -92,12 +101,3 @@
           url: http://immich-server:2283
           key: {{HOMEPAGE_VAR_IMMICH_KEY}}
           version: 2
-
-    # - Bazarr:
-    #     icon: bazarr.png
-    #     href: https://bazarr.{{HOMEPAGE_VAR_DOMAIN}}
-    #     description: Subtitles
-    #     widget:
-    #       type: bazarr
-    #       url: http://bazarr:6767
-    #       key: your-bazarr-api-key
