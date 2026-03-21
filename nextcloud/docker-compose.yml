@@ -79,6 +79,9 @@ services:
       - NEXTCLOUD_HOSTNAME=nextcloud.${TAILSCALE_DOMAIN}
       - NC_default_phone_region=SG
       - IMAGINARY_HOST=nextcloud-imaginary
+      - TRUSTED_PROXIES=172.16.0.0/12   # covers all Docker bridge subnets
+      - APACHE_DISABLE_REWRITE_IP=1
+      - NC_maintenance_window_start=22 # Maintainence in UTC time
     volumes:
       - ./config/nextcloud-main:/var/www/html
       - ${DATA_PATH}:/var/www/html/data
@@ -100,4 +103,5 @@ services:
       - "traefik.http.middlewares.nc-rep.redirectregex.permanent=true"
       # Security headers
       - "traefik.http.middlewares.nc-header.headers.customFrameOptionsValue=SAMEORIGIN"
-      - "traefik.http.middlewares.nc-header.headers.customResponseHeaders.Strict-Transport-Security=15552000"
+      # Do not enable this for self signed cert
+      # - "traefik.http.middlewares.nc-header.headers.customResponseHeaders.Strict-Transport-Security=15552000"
