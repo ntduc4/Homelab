@@ -28,9 +28,6 @@ services:
 
       # prowlarr
       - 9696:9696
-
-      # flaresolverr
-      - "${PORT:-8191}:8191"
     networks:
       - proxy
     restart: unless-stopped
@@ -55,13 +52,6 @@ services:
       - "traefik.http.routers.prowlarr.tls=true"
       - "traefik.http.routers.prowlarr.service=prowlarr"
       - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
-
-      # FlareSolverr -> flare.local
-      - "traefik.http.routers.flare.rule=Host(`flare.${PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.flare.entrypoints=websecure"
-      - "traefik.http.routers.flare.tls=true"
-      - "traefik.http.routers.flare.service=flare"
-      - "traefik.http.services.flare.loadbalancer.server.port=8191"
 
   prowlarr:
     image: lscr.io/linuxserver/prowlarr:latest
@@ -100,12 +90,13 @@ services:
       - LOG_FILE=${LOG_FILE:-none}
       - LOG_HTML=${LOG_HTML:-false}
       - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
-    network_mode: "service:gluetun"
     volumes:
       - ./config/flaresolverr:/config
     restart: unless-stopped
-    depends_on:
-      - gluetun
+    ports:
+      - "${PORT:-8191}:8191"
+    networks:
+      - proxy
 
   radarr:
     image: lscr.io/linuxserver/radarr:latest
