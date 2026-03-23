@@ -26,7 +26,7 @@
         description: TV Series
         widget:
           type: sonarr
-          url: http://gluetun:8989
+          url: http://sonarr:8989
           key: {{HOMEPAGE_VAR_SONARR_KEY}}
 
     - Radarr:
@@ -35,7 +35,7 @@
         description: Movies
         widget:
           type: radarr
-          url: http://gluetun:7878
+          url: http://radarr:7878
           key: {{HOMEPAGE_VAR_RADARR_KEY}}
 
     - Bazarr:
@@ -44,7 +44,7 @@
         description: Subtitles
         widget:
           type: bazarr
-          url: http://gluetun:6767
+          url: http://bazarr:6767
           key: {{HOMEPAGE_VAR_BAZARR_KEY}}
 
 - Downloads:
