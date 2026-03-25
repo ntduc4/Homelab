@@ -32,13 +32,13 @@
           password: {{HOMEPAGE_VAR_NEXTCLOUD_PASSWORD}}
 
 - Media Management:
-    - Jellyseerr:
-        icon: jellyseerr.png
+    - Seerr:
+        icon: seerr.png
         href: https://seerr.{{HOMEPAGE_VAR_DOMAIN}}
         description: Media Requests
         widget:
-          type: jellyseerr
-          url: http://jellyseerr:5055
+          type: seerr
+          url: http://seerr:5055
           key: {{HOMEPAGE_VAR_JELLYSEERR_KEY}}
 
     - Sonarr:
