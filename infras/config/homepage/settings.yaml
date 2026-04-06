@@ -25,7 +25,7 @@ layout:
     icon: mdi-download-circle
   Infrastructure:
     style: row
-    columns: 3
+    columns: 4
     icon: mdi-server
   Productivity:
     style: row

@@ -11,16 +11,6 @@
           enableBlocks: true
           enableNowPlaying: true
 
-    - Immich:
-        icon: immich.png
-        href: https://immich.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Photo & Video Backup
-        widget:
-          type: immich
-          url: http://immich-server:2283
-          key: {{HOMEPAGE_VAR_IMMICH_KEY}}
-          version: 2
-
     - Nextcloud:
         icon: nextcloud.png
         href: https://nextcloud.{{HOMEPAGE_VAR_DOMAIN}}
@@ -30,6 +20,16 @@
           url: http://nextcloud-app:80
           username: {{HOMEPAGE_VAR_NEXTCLOUD_USERNAME}}
           password: {{HOMEPAGE_VAR_NEXTCLOUD_PASSWORD}}
+
+    - Immich:
+        icon: immich.png
+        href: https://immich.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Photo & Video Backup
+        widget:
+          type: immich
+          url: http://immich-server:2283
+          key: {{HOMEPAGE_VAR_IMMICH_KEY}}
+          version: 2
 
 - Media Management:
     - Seerr:
@@ -95,6 +95,15 @@
         widget:
           type: traefik
           url: http://traefik:8080
+
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://kuma.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Uptime Monitor
+        widget:
+          type: uptimekuma
+          url: http://uptime-kuma:3001
+          slug: homepage
 
     - Dozzle:
         icon: dozzle.png
