@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     volumes:
       - ${DATA_PATH}:/data
-    command: "ifixit_en_all_2025-12.zim wikipedia_en_all_maxi_2026-02.zim wikipedia_ja_all_maxi_2025-10.zim wikipedia_vi_all_maxi_2026-02.zim wikiversity_en_all_maxi_2026-02.zim"
+    command: "ifixit_en_all_2025-12.zim  stackoverflow.com_en_all_2023-11.zim  wikipedia_en_all_maxi_2026-02.zim  wikipedia_ja_all_maxi_2025-10.zim  wikipedia_vi_all_maxi_2026-02.zim  wikiversity_en_all_maxi_2026-02.zim"
     networks:
       - proxy
     labels:
