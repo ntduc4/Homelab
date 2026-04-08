@@ -25,9 +25,9 @@ layout:
     icon: mdi-download-circle
   Infrastructure:
     style: row
-    columns: 4
+    columns: 3
     icon: mdi-server
-  Productivity:
+  Monitor:
     style: row
-    columns: 2
+    columns: 3
     icon: mdi-briefcase

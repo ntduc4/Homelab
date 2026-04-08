@@ -74,14 +74,14 @@ services:
   uptime-kuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
-    restart: always
+    restart: unless-stopped
     ports:
-      - "3001:3001"  # This maps the container port "3001" to the host port "3001"
+      - "3001:3001"
     volumes:
-      - ./config/kuma:/app/data  # Configuring persistent storage
+      - ./config/kuma:/app/data
     environment:
       - TZ=UTC  # Set the timezone (change to your preferred local timezone so monitoring times are the same)
-      - UMASK=0022  # Set your file permissions manually
+      - UMASK=0022
     networks:
       - proxy
     labels:
@@ -102,3 +102,32 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  scrutiny:
+    image: ghcr.io/analogj/scrutiny:master-omnibus
+    container_name: scrutiny
+    cap_add:
+      - SYS_RAWIO
+    ports:
+      - 8080:8080
+    volumes:
+      - /run/udev:/run/udev:ro
+      - ./config/scrutiny/config:/opt/scrutiny/config
+      - ./config/scrutiny/influxdb:/opt/scrutiny/influxdb
+    devices:
+      - /dev/sdb:/dev/sdb
+      - /dev/sdc:/dev/sdc
+      - /dev/sdd:/dev/sdd
+      - /dev/sde:/dev/sde
+    restart: unless-stopped
+    networks:
+      - proxy
+    environment:
+      - SCRUTINY_NOTIFY_URLS=${SCRUTINY_NOTIFY_URLS}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.scrutiny.rule=Host(`scrutiny.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.scrutiny.entrypoints=websecure"
+      - "traefik.http.routers.scrutiny.tls=true"
+      - "traefik.http.services.scrutiny.loadbalancer.server.port=8080"

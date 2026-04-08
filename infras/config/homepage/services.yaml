@@ -4,6 +4,8 @@
         icon: jellyfin.png
         href: https://jellyfin.{{HOMEPAGE_VAR_DOMAIN}}
         description: Media Server
+        server: my-docker
+        container: jellyfin
         widget:
           type: jellyfin
           url: http://jellyfin:8096
@@ -15,6 +17,8 @@
         icon: nextcloud.png
         href: https://nextcloud.{{HOMEPAGE_VAR_DOMAIN}}
         description: File Storage & Collaboration
+        server: my-docker
+        container: nextcloud-app
         widget:
           type: nextcloud
           url: http://nextcloud-app:80
@@ -25,6 +29,8 @@
         icon: immich.png
         href: https://immich.{{HOMEPAGE_VAR_DOMAIN}}
         description: Photo & Video Backup
+        server: my-docker
+        container: immich_server
         widget:
           type: immich
           url: http://immich-server:2283
@@ -36,6 +42,8 @@
         icon: seerr.png
         href: https://seerr.{{HOMEPAGE_VAR_DOMAIN}}
         description: Media Requests
+        server: my-docker
+        container: seerr
         widget:
           type: seerr
           url: http://seerr:5055
@@ -45,6 +53,8 @@
         icon: sonarr.png
         href: https://sonarr.{{HOMEPAGE_VAR_DOMAIN}}
         description: TV Series
+        server: my-docker
+        container: sonarr
         widget:
           type: sonarr
           url: http://sonarr:8989
@@ -54,6 +64,8 @@
         icon: radarr.png
         href: https://radarr.{{HOMEPAGE_VAR_DOMAIN}}
         description: Movies
+        server: my-docker
+        container: radarr
         widget:
           type: radarr
           url: http://radarr:7878
@@ -63,54 +75,91 @@
         icon: bazarr.png
         href: https://bazarr.{{HOMEPAGE_VAR_DOMAIN}}
         description: Subtitles
+        server: my-docker
+        container: bazarr
         widget:
           type: bazarr
           url: http://bazarr:6767
           key: {{HOMEPAGE_VAR_BAZARR_KEY}}
 
+    - Prowlarr:
+        icon: prowlarr.png
+        href: https://prowlarr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Indexer Manager
+        server: my-docker
+        container: prowlarr
+        widget:
+          type: prowlarr
+          url: http://gluetun:9696
+          key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
+
     - qBittorrent:
         icon: qbittorrent.png
         href: https://qbit.{{HOMEPAGE_VAR_DOMAIN}}
         description: Torrent Client
+        server: my-docker
+        container: qbittorrent
         widget:
           type: qbittorrent
           url: http://gluetun:8070
           username: {{HOMEPAGE_VAR_QBIT_USERNAME}}
           password: {{HOMEPAGE_VAR_QBIT_PASSWORD}}
 
-    - Prowlarr:
-        icon: prowlarr.png
-        href: https://prowlarr.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Indexer Manager
+- Monitor:
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: https://kuma.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Uptime Monitor
+        server: my-docker
+        container: uptime-kuma
         widget:
-          type: prowlarr
-          url: http://gluetun:9696
-          key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
+          type: uptimekuma
+          url: http://uptime-kuma:3001
+          slug: homepage
+
+    - Scrutiny:
+        icon: scrutiny.png
+        href: https://scrutiny.yourdomain.com
+        description: HDD S.M.A.R.T. Monitor
+        server: my-docker
+        container: scrutiny
+        widget:
+          type: scrutiny
+          url: http://scrutiny:8080
+
+    - Dozzle:
+        icon: dozzle.png
+        href: https://dozzle.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Container Logs
+        server: my-docker
+        container: dozzle
 
 - Infrastructure:
     - Traefik:
         icon: traefik.png
         href: https://traefik.{{HOMEPAGE_VAR_DOMAIN}}
         description: Reverse Proxy
+        server: my-docker
+        container: traefik
         widget:
           type: traefik
           url: http://traefik:8080
 
-    - Uptime Kuma:
-        icon: uptime-kuma.png
-        href: https://kuma.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Uptime Monitor
-        widget:
-          type: uptimekuma
-          url: http://uptime-kuma:3001
-          slug: homepage
-
-    - Dozzle:
-        icon: dozzle.png
-        href: https://dozzle.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Container Logs
+    - Gluetun:
+        icon: gluetun.png
+        # href: https://qbit.yourdomain.com
+        description: VPN Tunnel
+        server: my-docker
+        container: gluetun
+        # TODO: Config gluetun here
+        # widget:
+        #   type: gluetun
+        #   url: http://gluetun:8000
 
     - File Browser:
         icon: filebrowser.png
         href: https://files.{{HOMEPAGE_VAR_DOMAIN}}
         description: Web File Manager
+        server: my-docker
+        container: filebrowser
+

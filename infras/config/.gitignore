@@ -3,3 +3,5 @@ portainer/*
 dozzle/*
 filebrowser/*
 kuma/*
+scrutiny/config/*
+scrutiny/influxdb/*
