@@ -36,6 +36,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro # (optional) For docker integrations
       - ${DATA_PATH}:/data:ro
       - ${JELLY_DATA_PATH}:/jelly-data:ro
+      - ${THIRD_DISK_PATH}:/disk3:ro
     environment:
       HOMEPAGE_ALLOWED_HOSTS: "homepage.${PUBLIC_DOMAIN},${PUBLIC_DOMAIN}" # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
       HOMEPAGE_VAR_DOMAIN: "${PUBLIC_DOMAIN}"

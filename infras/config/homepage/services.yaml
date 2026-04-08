@@ -119,7 +119,7 @@
 
     - Scrutiny:
         icon: scrutiny.png
-        href: https://scrutiny.yourdomain.com
+        href: https://scrutiny.{{HOMEPAGE_VAR_DOMAIN}}
         description: HDD S.M.A.R.T. Monitor
         server: my-docker
         container: scrutiny

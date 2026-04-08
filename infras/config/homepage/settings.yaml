@@ -2,6 +2,15 @@
 title: my homelab
 description: Home Lab Dashboard
 
+background:
+  image: https://images2.alphacoders.com/129/thumb-1920-1295497.png
+  blur: md
+  saturate: 100
+  brightness: 30
+  opacity: 50
+
+cardBlur: sm
+
 color: slate
 theme: dark
 
@@ -23,11 +32,11 @@ layout:
     style: row
     columns: 2
     icon: mdi-download-circle
+  Monitor:
+    style: row
+    columns: 3
+    icon: mdi-monitor
   Infrastructure:
     style: row
     columns: 3
     icon: mdi-server
-  Monitor:
-    style: row
-    columns: 3
-    icon: mdi-briefcase

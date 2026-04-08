@@ -1,0 +1,41 @@
+/* Catppuccin Macchiato */
+:root {
+  --color-100: 36 39 58; /* base */
+  --color-200: 30 32 48; /* mantle */
+  --color-300: 24 25 38; /* crust */
+  --color-400: 73 77 100; /* surface0 */
+  --color-500: 91 96 120; /* surface1 */
+  --color-600: 110 115 141; /* surface2 */
+  --color-700: 202 211 245; /* text */
+  --color-800: 184 192 224; /* subtext0 */
+  --color-900: 165 173 203; /* subtext1 */
+}
+
+/* Card backgrounds */
+#information-widgets > div,
+.service-card {
+  background-color: rgb(36 39 58 / 80%) !important;
+  border-color: rgb(73 77 100 / 50%) !important;
+}
+
+/* Accent color - Macchiato Mauve */
+a,
+.text-theme-800 {
+  color: #c6a0f6 !important;
+}
+
+/* Running badge */
+.badge {
+  background-color: #a6da95 !important; /* Macchiato Green */
+}
+
+#information-widgets {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+#information-widgets > div {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
