@@ -20,6 +20,7 @@ declare -A STACK_DIRS=(
     [arr]="jellyfin-stack"
     [jellyfin]="jellyfin-stack"
     [cloudflared]="cloudflared"
+    [kiwix]="kiwix"
 )
 
 # Optional: override compose files per stack (space-separated)

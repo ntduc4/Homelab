@@ -1,0 +1,23 @@
+name: kiwix
+
+networks:
+  proxy:
+    external: true
+
+services:
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    container_name: kiwix
+    restart: unless-stopped
+    volumes:
+      - ${DATA_PATH}:/data
+    command: "ifixit_en_all_2025-12.zim wikipedia_en_all_maxi_2026-02.zim wikipedia_ja_all_maxi_2025-10.zim wikipedia_vi_all_maxi_2026-02.zim wikiversity_en_all_maxi_2026-02.zim"
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.kiwix.rule=Host(`kiwix.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.kiwix.entrypoints=websecure"
+      - "traefik.http.routers.kiwix.tls=true"
+      - "traefik.http.services.kiwix.loadbalancer.server.port=8080"
