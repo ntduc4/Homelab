@@ -5,3 +5,5 @@ filebrowser/*
 kuma/*
 scrutiny/config/*
 scrutiny/influxdb/*
+beszel/*
+beszel_agent_data/*
