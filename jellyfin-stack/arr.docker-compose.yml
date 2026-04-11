@@ -5,82 +5,27 @@ networks:
     external: true
 
 services:
-  gluetun:
-    image: qmcgaw/gluetun:latest
-    container_name: gluetun
-    cap_add:
-      - NET_ADMIN
-    devices:
-      - /dev/net/tun:/dev/net/tun
-    volumes:
-      - ./config/gluetun:/gluetun
-    environment:
-      - VPN_SERVICE_PROVIDER=nordvpn
-      - VPN_TYPE=openvpn
-      - OPENVPN_USER=${NORD_VPN_USERNAME}
-      - OPENVPN_PASSWORD=${NORD_VPN_PASSWORD}
-      - SERVER_COUNTRIES=Netherlands
-    ports:
-      # qbittorrent
-      - 6881:6881/udp
-      - 6881:6881
-      - 8070:8070
-
-      # prowlarr
-      - 9696:9696
-    networks:
-      - proxy
-    restart: unless-stopped
-    # -----------------------------------------------------------------------
-    # Traefik labels for ALL services that use network_mode: service:gluetun
-    # Traefik reaches them through gluetun's network on their internal ports
-    # -----------------------------------------------------------------------
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
-
-      # qBittorrent -> qbit.local
-      - "traefik.http.routers.qbit.rule=Host(`qbit.${PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.qbit.entrypoints=websecure"
-      - "traefik.http.routers.qbit.tls=true"
-      - "traefik.http.routers.qbit.service=qbit"
-      - "traefik.http.services.qbit.loadbalancer.server.port=8070"
-
-      # Prowlarr -> prowlarr.local
-      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${PUBLIC_DOMAIN}`)"
-      - "traefik.http.routers.prowlarr.entrypoints=websecure"
-      - "traefik.http.routers.prowlarr.tls=true"
-      - "traefik.http.routers.prowlarr.service=prowlarr"
-      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
-
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:latest
+    image: lscr.io/linuxserver/prowlarr:develop
     container_name: prowlarr
     environment:
       - PUID=1000
       - PGID=1000
     volumes:
       - ./config/prowlarr:/config
-    network_mode: "service:gluetun"
     restart: unless-stopped
-    depends_on:
-      - gluetun
-
-  qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:latest
-    container_name: qbittorrent
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - WEBUI_PORT=8070
-      - TORRENTING_PORT=6881
-    volumes:
-      - ./config/qbittorrent:/config
-      - ${MEDIA_PATH}:/media
-    network_mode: "service:gluetun"
-    restart: unless-stopped
-    depends_on:
-      - gluetun
+    ports:
+      - 9696:9696
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr.tls=true"
+      - "traefik.http.routers.prowlarr.service=prowlarr"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
 
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest

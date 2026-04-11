@@ -1,0 +1,69 @@
+name: qbit
+
+networks:
+  proxy:
+    external: true
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - ./config/gluetun:/gluetun
+    environment:
+      - VPN_SERVICE_PROVIDER=private internet access
+      - VPN_TYPE=openvpn
+      - OPENVPN_USER=${VPN_USERNAME}
+      - OPENVPN_PASSWORD=${VPN_PASSWORD}
+      - SERVER_REGIONS=${PIA_REGION:-Netherlands}
+      - VPN_PORT_FORWARDING=on
+      - VPN_PORT_FORWARDING_STATUS_FILE=/gluetun/forwarded_port
+    ports:
+      - 8070:8070
+    networks:
+      - proxy
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.qbit.rule=Host(`qbit.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.qbit.entrypoints=websecure"
+      - "traefik.http.routers.qbit.tls=true"
+      - "traefik.http.routers.qbit.service=qbit"
+      - "traefik.http.services.qbit.loadbalancer.server.port=8070"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - WEBUI_PORT=8070
+      # - TORRENTING_PORT=6881
+    volumes:
+      - ./config/qbittorrent:/config
+      - ${MEDIA_PATH}:/media
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    depends_on:
+      - gluetun
+
+  qbittorrent-port-updater:
+    image: charlocharlie/qbittorrent-port-forward-file:latest
+    container_name: qbittorrent-port-updater
+    environment:
+      - QBT_USERNAME=${QBITTORRENT_USERNAME}
+      - QBT_PASSWORD=${QBITTORRENT_PASSWORD}
+      - QBT_ADDR=http://localhost:8070
+      - PORT_FILE=/gluetun/forwarded_port
+    volumes:
+      - ./config/gluetun:/gluetun:ro
+    network_mode: "service:gluetun"
+    restart: unless-stopped
+    depends_on:
+      - gluetun
+      - qbittorrent
