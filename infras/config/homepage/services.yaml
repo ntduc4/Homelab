@@ -90,7 +90,7 @@
         container: prowlarr
         widget:
           type: prowlarr
-          url: http://gluetun:9696
+          url: http://prowlarr:9696
           key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
 
     - qBittorrent:
