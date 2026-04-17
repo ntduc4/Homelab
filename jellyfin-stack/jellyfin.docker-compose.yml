@@ -14,6 +14,7 @@ services:
       - 7359:7359/udp
     devices:
       - /dev/dri/renderD128:/dev/dri/renderD128
+      - /dev/dri/card0:/dev/dri/card0
     group_add:
       - "992"
     volumes:
