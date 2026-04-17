@@ -134,6 +134,18 @@
         server: my-docker
         container: dozzle
 
+    - Beszel:
+        icon: beszel.png
+        href: https://beszel.{{HOMEPAGE_VAR_DOMAIN}}
+        description: System Monitor
+        server: my-docker
+        container: beszel
+        # widget:
+        #   type: beszel
+        #   url: http://beszel:8090
+        #   username: {{HOMEPAGE_VAR_BESZEL_USERNAME}}
+        #   password: {{HOMEPAGE_VAR_BESZEL_PASSWORD}}
+
 - Infrastructure:
     - Traefik:
         icon: traefik.png

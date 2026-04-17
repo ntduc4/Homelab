@@ -34,7 +34,7 @@ layout:
     icon: mdi-download-circle
   Monitor:
     style: row
-    columns: 3
+    columns: 4
     icon: mdi-monitor
   Infrastructure:
     style: row
