@@ -82,6 +82,9 @@ services:
       - TRUSTED_PROXIES=172.16.0.0/12   # covers all Docker bridge subnets
       - APACHE_DISABLE_REWRITE_IP=1
       - NC_maintenance_window_start=22 # Maintainence in UTC time
+      - PHP_UPLOAD_LIMIT=16G
+      - PHP_MEMORY_LIMIT=1G
+      - APACHE_BODY_LIMIT=0
     volumes:
       - ./config/nextcloud-main:/var/www/html
       - ${DATA_PATH}:/var/www/html/data
