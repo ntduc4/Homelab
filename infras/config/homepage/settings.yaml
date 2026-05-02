@@ -24,6 +24,10 @@ quicklaunch:
   showSearchSuggestions: true
 
 layout:
+  Tools:
+    style: row
+    columns: 2
+    icon: mdi-tools
   Media:
     style: row
     columns: 3

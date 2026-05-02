@@ -1,0 +1,46 @@
+name: tools
+
+networks:
+  proxy:
+    external: true
+
+services:
+  stirling-pdf:
+    image: stirlingtools/stirling-pdf:latest
+    container_name: stirling-pdf
+    volumes:
+      - ./config/stirling:/configs
+    restart: unless-stopped
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.stirling-pdf.rule=Host(`pdf.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.stirling-pdf.entrypoints=websecure"
+      - "traefik.http.routers.stirling-pdf.tls=true"
+      - "traefik.http.routers.stirling-pdf.service=stirling-pdf"
+      - "traefik.http.services.stirling-pdf.loadbalancer.server.port=8080"
+
+  convertx:
+    image: ghcr.io/c4illin/convertx
+    container_name: convertx
+    restart: unless-stopped
+    # ports:
+    #   - "3000:3000"
+    environment:
+      - JWT_SECRET=hP83eH8b7REyepzmMjUAy8PVuFwVaY3EkaARhgKLbq4ivmM9Ysygpe4D1gTQ8fTz # will use randomUUID() if unset
+      - MAX_CONVERT_PROCESS=1
+      # - HTTP_ALLOWED=true # uncomment this if accessing it over a non-https connection
+    volumes:
+      - ./config/convertx:/app/data
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.convertx.rule=Host(`convert.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.convertx.entrypoints=websecure"
+      - "traefik.http.routers.convertx.tls=true"
+      - "traefik.http.routers.convertx.service=convertx"
+      - "traefik.http.services.convertx.loadbalancer.server.port=3000"

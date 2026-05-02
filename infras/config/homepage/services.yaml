@@ -1,4 +1,18 @@
 ---
+- Tools:
+    - Stirling PDF:
+        icon: stirling-pdf.png
+        href: https://pdf.{{HOMEPAGE_VAR_DOMAIN}}
+        description: PDF Editor
+        server: my-docker
+        container: stirling-pdf
+    - ConvertX:
+        icon: convertx.png
+        href: https://convert.{{HOMEPAGE_VAR_DOMAIN}}
+        description: File Converter
+        server: my-docker
+        container: convertx
+
 - Media:
     - Jellyfin:
         icon: jellyfin.png
@@ -127,24 +141,27 @@
           type: scrutiny
           url: http://scrutiny:8080
 
-    - Dozzle:
-        icon: dozzle.png
-        href: https://dozzle.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Container Logs
-        server: my-docker
-        container: dozzle
-
     - Beszel:
         icon: beszel.png
         href: https://beszel.{{HOMEPAGE_VAR_DOMAIN}}
         description: System Monitor
         server: my-docker
         container: beszel
-        # widget:
-        #   type: beszel
-        #   url: http://beszel:8090
-        #   username: {{HOMEPAGE_VAR_BESZEL_USERNAME}}
-        #   password: {{HOMEPAGE_VAR_BESZEL_PASSWORD}}
+        widget:
+          type: beszel
+          url: http://beszel:8090
+          username: {{HOMEPAGE_VAR_BESZEL_USERNAME}}
+          password: {{HOMEPAGE_VAR_BESZEL_PASSWORD}}
+          version: 2
+          systemId: Host
+          fields: ["cpu", "memory", "disk", "network"]
+
+    - Dozzle:
+        icon: dozzle.png
+        href: https://dozzle.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Container Logs
+        server: my-docker
+        container: dozzle
 
 - Infrastructure:
     - Traefik:
@@ -164,9 +181,12 @@
         server: my-docker
         container: gluetun
         # TODO: Config gluetun here
-        # widget:
-        #   type: gluetun
-        #   url: http://gluetun:8000
+        widget:
+          type: gluetun
+          url: http://gluetun:8000
+          key: {{HOMEPAGE_VAR_GLUETUN_KEY}}
+          version: 2
+          fields: ["public_ip", "country", "region", "port_forwarded"]
 
     - File Browser:
         icon: filebrowser.png

@@ -168,4 +168,4 @@ services:
       LISTEN: 45876
       KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRBd0MsCBNPQ1e5kTN4E/0EMTL7vGtlmwweKAyLFTYq'
       TOKEN: cad1ab16-977b-48e9-a59f-c855fa3beb33
-      HUB_URL: https://beszel.ts.ntduc.org
+      HUB_URL: https://beszel.${PUBLIC_DOMAIN}
