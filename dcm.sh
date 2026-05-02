@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # dcm.sh — Docker Compose Manager
-# Usage: dcm.sh <up|down|restart> [stack_name]
+# Usage: dcm.sh <up|down|restart|update> [stack_name]
 
 set -euo pipefail
 
@@ -10,7 +10,7 @@ BASE_DIR="${DCM_BASE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 
 # Stack order: traefik first up, last down
 # To add a new stack: append to STACK_ORDER and add an entry in STACK_DIRS (and optionally STACK_FILES)
-STACK_ORDER=(traefik qbit arr jellyfin nextcloud immich infra stirling cloudflared)
+STACK_ORDER=(traefik qbit arr jellyfin nextcloud immich kiwix stirling infra cloudflared)
 
 declare -A STACK_DIRS=(
     [traefik]="traefik"
@@ -49,6 +49,7 @@ usage() {
     echo -e "  up       Start all stacks (or a specific one)"
     echo -e "  down     Stop all stacks (or a specific one)"
     echo -e "  restart  Down then up all stacks (or a specific one)"
+    echo -e "  update   Pull latest images then restart all stacks (or a specific one)"
     echo
     echo -e "${BOLD}Available stacks:${RESET}"
     for key in "${!STACK_DIRS[@]}"; do
@@ -65,6 +66,8 @@ usage() {
     echo -e "  $(basename "$0") up nextcloud"
     echo -e "  $(basename "$0") restart"
     echo -e "  $(basename "$0") restart arr"
+    echo -e "  $(basename "$0") update"
+    echo -e "  $(basename "$0") update arr"
     exit 1
 }
 
@@ -120,6 +123,38 @@ stack_down() {
     echo -e "  ${YELLOW}✓ Stopped${RESET}"
 }
 
+stack_pull() {
+    local name="$1"
+    local dir="$BASE_DIR/${STACK_DIRS[$name]}"
+
+    echo -e "\n${CYAN}⬇ Pulling${RESET} ${BOLD}${name}${RESET}  (${dir})"
+
+    if [[ ! -d "$dir" ]]; then
+        echo -e "  ${RED}✗ Directory not found: ${dir}${RESET}"
+        return 1
+    fi
+
+    cd "$dir"
+
+    if [[ -n "${STACK_FILES[$name]:-}" ]]; then
+        local file_flags=()
+        for f in ${STACK_FILES[$name]}; do
+            file_flags+=(-f "$f")
+        done
+        sudo docker compose "${file_flags[@]}" pull
+    else
+        sudo docker compose pull
+    fi
+
+    echo -e "  ${GREEN}✓ Pulled${RESET}"
+}
+
+stack_update() {
+    local name="$1"
+    echo -e "\n${CYAN}⟳ Updating${RESET} ${BOLD}${name}${RESET}"
+    stack_pull "$name" && stack_restart "$name"
+}
+
 stack_restart() {
     local name="$1"
     echo -e "\n${CYAN}↺ Restarting${RESET} ${BOLD}${name}${RESET}"
@@ -132,8 +167,8 @@ stack_restart() {
 COMMAND="$1"
 TARGET="${2:-}"
 
-[[ "$COMMAND" != "up" && "$COMMAND" != "down" && "$COMMAND" != "restart" ]] && {
-    echo -e "${RED}Error:${RESET} command must be 'up', 'down', or 'restart'"
+[[ "$COMMAND" != "up" && "$COMMAND" != "down" && "$COMMAND" != "restart" && "$COMMAND" != "update" ]] && {
+    echo -e "${RED}Error:${RESET} command must be 'up', 'down', 'restart', or 'update'"
     usage
 }
 
@@ -148,12 +183,33 @@ if [[ -n "$TARGET" ]]; then
         up)      stack_up "$TARGET" ;;
         down)    stack_down "$TARGET" ;;
         restart) stack_restart "$TARGET" ;;
+        update)  stack_update "$TARGET" ;;
     esac
 else
     # All stacks — respect explicit order
     FAILED=()
 
-    if [[ "$COMMAND" == "restart" ]]; then
+    if [[ "$COMMAND" == "update" ]]; then
+        echo -e "${CYAN}⟳ Updating all stacks${RESET}"
+
+        for name in "${STACK_ORDER[@]}"; do
+            stack_pull "$name" || FAILED+=("$name (pull)")
+        done
+
+        if [[ ${#FAILED[@]} -eq 0 ]]; then
+            echo -e "\n${CYAN}↺ Restarting all stacks after update${RESET}"
+
+            mapfile -t DOWN_ORDER < <(printf '%s\n' "${STACK_ORDER[@]}" | tac)
+            for name in "${DOWN_ORDER[@]}"; do
+                stack_down "$name" || FAILED+=("$name (down)")
+            done
+
+            echo
+            for name in "${STACK_ORDER[@]}"; do
+                stack_up "$name" || FAILED+=("$name (up)")
+            done
+        fi
+    elif [[ "$COMMAND" == "restart" ]]; then
         # Down in reverse order, then up in forward order
         echo -e "${CYAN}↺ Restarting all stacks${RESET}"
 
@@ -184,4 +240,5 @@ else
     else
         echo -e "${GREEN}✓ All stacks ${COMMAND} complete${RESET}"
     fi
+
 fi
