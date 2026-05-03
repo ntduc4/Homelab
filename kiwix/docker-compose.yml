@@ -17,7 +17,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.kiwix.rule=Host(`kiwix.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.kiwix.rule=Host(`kiwix.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.kiwix.entrypoints=websecure"
       - "traefik.http.routers.kiwix.tls=true"
       - "traefik.http.services.kiwix.loadbalancer.server.port=8080"

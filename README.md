@@ -2,99 +2,13 @@
 
 This README documents the current repo layout, setup order, required `.env` values, and the host-specific hardcoded values that must be checked before running the stack on a fresh machine.
 
+This version uses the updated domain naming:
+
+- `TAILSCALE_DOMAIN` is the default internal/private domain used by your Traefik routes, Homepage links, and Tailscale-only services.
+- `EXTERNAL_DOMAIN` is the public internet domain, only used by services that you intentionally expose externally.
+- The old generic domain variable has been removed from this README and from the generated `.env.example` files.
+
 > Commit `.env.example`. Do **not** commit real `.env` files, tunnel tokens, API keys, app passwords, database passwords, or generated config folders containing secrets.
-
-## Current repo layout
-
-```text
-homelab/
-├── .git/
-├── README.md
-├── dcm.sh
-├── cloudflared/
-│   ├── .env.example
-│   ├── .gitignore
-│   └── docker-compose.yml
-├── immich/
-│   ├── .env.example
-│   ├── .gitignore
-│   └── docker-compose.yml
-├── infras/
-│   ├── .env.example
-│   ├── .gitignore
-│   ├── create-dozzle-user.sh
-│   ├── docker-compose.yml
-│   └── config/
-│       ├── beszel/
-│       ├── beszel_agent_data/
-│       │   └── fingerprint
-│       ├── dozzle/
-│       ├── filebrowser/
-│       ├── homepage/
-│       │   ├── bookmarks.yaml
-│       │   ├── custom.css
-│       │   ├── custom.js
-│       │   ├── docker.yaml
-│       │   ├── kubernetes.yaml
-│       │   ├── proxmox.yaml
-│       │   ├── services.yaml
-│       │   ├── settings.yaml
-│       │   └── widgets.yaml
-│       ├── kuma/
-│       ├── portainer/
-│       └── scrutiny/
-│           ├── config/
-│           └── influxdb/
-├── jellyfin-stack/
-│   ├── .env.example
-│   ├── .gitignore
-│   ├── arr.docker-compose.yml
-│   ├── jellyfin.docker-compose.yml
-│   ├── make-media-dirs.sh
-│   ├── qbit.docker-compose.yml
-│   ├── jelly-cache/
-│   └── config/
-│       ├── bazarr/
-│       ├── flaresolverr/
-│       ├── gluetun/
-│       ├── jellyfin/
-│       ├── prowlarr/
-│       ├── qbittorrent/
-│       ├── radarr/
-│       ├── seerr/
-│       ├── sonarr/
-│       └── sonarr-anime/
-├── kiwix/
-│   ├── .env.example
-│   ├── .gitignore
-│   └── docker-compose.yml
-├── nextcloud/
-│   ├── .env.example
-│   ├── .gitignore
-│   ├── docker-compose.yml
-│   └── config/
-│       ├── mysql/
-│       └── nextcloud-main/
-├── recyclarr/
-│   ├── docker-compose.yml
-│   └── config/
-├── tools/
-│   ├── .env.example
-│   ├── .gitignore
-│   ├── docker-compose.yml
-│   └── config/
-│       ├── convertx/
-│       ├── microbin/
-│       └── stirling/
-└── traefik/
-    ├── .env.example
-    ├── .gitignore
-    ├── create-cert.sh
-    ├── docker-compose.yml
-    ├── certs/
-    └── config/
-        └── tls.yml
-```
 
 ## Stack overview
 
@@ -118,6 +32,28 @@ Important naming detail: the folder is `infras/`, but the `dcm.sh` target is `in
 ./dcm.sh up infra      # correct
 ./dcm.sh up infras     # wrong unless you add an alias in dcm.sh
 ```
+
+## Domain model
+
+Use only these domain variables:
+
+| Variable | Purpose | Example |
+|---|---|---|
+| `TAILSCALE_DOMAIN` | Internal/Tailscale domain used for private routes and Homepage links | `ts.example.com` |
+| `EXTERNAL_DOMAIN` | Public internet domain used only by intentionally external services | `example.com` |
+
+Current intended routing model:
+
+| Service group | Internal route | External route |
+|---|---|---|
+| Traefik dashboard | `traefik.${TAILSCALE_DOMAIN}` | none by default |
+| Infra apps | `homepage.${TAILSCALE_DOMAIN}`, `dozzle.${TAILSCALE_DOMAIN}`, `kuma.${TAILSCALE_DOMAIN}`, etc. | none by default |
+| Jellyfin stack | `jellyfin.${TAILSCALE_DOMAIN}`, `sonarr.${TAILSCALE_DOMAIN}`, `qbit.${TAILSCALE_DOMAIN}`, etc. | none by default |
+| Tools | `pdf.${TAILSCALE_DOMAIN}`, `convert.${TAILSCALE_DOMAIN}`, `paste.${TAILSCALE_DOMAIN}` | none by default |
+| Kiwix | `kiwix.${TAILSCALE_DOMAIN}` | none by default |
+| Immich | `immich.${TAILSCALE_DOMAIN}` | `immich.${EXTERNAL_DOMAIN}` |
+| Nextcloud | `nextcloud.${TAILSCALE_DOMAIN}` | `nextcloud.${EXTERNAL_DOMAIN}` |
+| Collabora | `collabora.${TAILSCALE_DOMAIN}` | `collabora.${EXTERNAL_DOMAIN}` |
 
 ## Prerequisites
 
@@ -259,8 +195,7 @@ cd ../cloudflared && docker compose up -d
 
 | Variable | Used by | Meaning | Example |
 |---|---|---|---|
-| `PUBLIC_DOMAIN` | Traefik routes, most public services | Main public domain | `example.com` |
-| `TAILSCALE_DOMAIN` | Immich, Nextcloud, Collabora | Internal Tailnet/Tailscale domain | `host.tailnet.ts.net` |
+| `TAILSCALE_DOMAIN` | Traefik routes, Homepage links, most internal services | Internal/Tailscale domain | `ts.example.com` |
 | `EXTERNAL_DOMAIN` | Immich, Nextcloud, Collabora | External public domain | `example.com` |
 | `DATA_PATH` | Homepage, File Browser, Kiwix, Nextcloud | General data mount | `/media/huyen/MainDisk/data` |
 | `MEDIA_PATH` | qBit, Arr apps, Jellyfin | Shared media root | `/media/huyen/MainDisk/media` |
@@ -274,7 +209,7 @@ cd ../cloudflared && docker compose up -d
 ### `traefik/.env.example`
 
 ```dotenv
-PUBLIC_DOMAIN=example.com
+TAILSCALE_DOMAIN=ts.example.com
 ```
 
 Notes:
@@ -282,7 +217,7 @@ Notes:
 - `traefik/docker-compose.yml` creates the shared Docker network named `proxy`.
 - `traefik/config/tls.yml` and `traefik/certs/` must exist for the dynamic TLS config.
 - Ports `80` and `443` must be free on the host.
-- The Traefik dashboard is routed through `traefik.${PUBLIC_DOMAIN}`. Add authentication middleware before exposing it to the internet.
+- The Traefik dashboard is routed through `traefik.${TAILSCALE_DOMAIN}`. Add authentication middleware before exposing it anywhere outside your trusted network.
 
 ### `cloudflared/.env.example`
 
@@ -299,7 +234,7 @@ Notes:
 
 ```dotenv
 # Domains
-TAILSCALE_DOMAIN=host.tailnet.ts.net
+TAILSCALE_DOMAIN=ts.example.com
 EXTERNAL_DOMAIN=example.com
 
 # Version
@@ -326,7 +261,7 @@ Notes:
 
 ```dotenv
 # Domain
-PUBLIC_DOMAIN=example.com
+TAILSCALE_DOMAIN=ts.example.com
 
 # Storage mounts used by Homepage and File Browser
 DATA_PATH=/media/huyen/MainDisk/data
@@ -361,7 +296,7 @@ BESZEL_AGENT_TOKEN=replace-with-token-from-beszel-hub
 
 Notes:
 
-- `HOMEPAGE_VAR_DOMAIN` is created inside compose from `PUBLIC_DOMAIN`.
+- `HOMEPAGE_VAR_DOMAIN` is created inside compose from `TAILSCALE_DOMAIN`.
 - Homepage config references Stirling PDF, ConvertX, MicroBin, Jellyfin, Nextcloud, Immich, Seerr, Sonarr, Sonarr Anime, Radarr, Bazarr, Prowlarr, qBittorrent, Uptime Kuma, Scrutiny, Beszel, Dozzle, Traefik, Gluetun, and File Browser.
 - Dozzle has shell/actions enabled and mounts the Docker socket. Keep it authenticated.
 - Uptime Kuma and Beszel currently use `TZ=UTC`; change to `Asia/Singapore` if you want local timestamps.
@@ -372,7 +307,7 @@ Used by `qbit.docker-compose.yml`, `arr.docker-compose.yml`, and `jellyfin.docke
 
 ```dotenv
 # Domain and shared media path
-PUBLIC_DOMAIN=example.com
+TAILSCALE_DOMAIN=ts.example.com
 MEDIA_PATH=/media/huyen/MainDisk/media
 
 # Gluetun / Private Internet Access
@@ -395,7 +330,7 @@ PORT=8191
 Notes:
 
 - qBittorrent uses `network_mode: service:gluetun`, so its traffic exits through Gluetun.
-- qBittorrent WebUI is exposed through Gluetun on port `8070`.
+- qBittorrent WebUI is exposed through Gluetun on port `8070` and routed as `qbit.${TAILSCALE_DOMAIN}`.
 - Gluetun is hardcoded for Private Internet Access over OpenVPN, with port forwarding enabled.
 - `qbittorrent-port-updater` reads `/gluetun/forwarded_port` and updates qBittorrent.
 - qBittorrent has `mem_limit: 3g` and `memswap_limit: 3g` hardcoded.
@@ -416,7 +351,7 @@ Recommended internal media roots:
 
 ```dotenv
 # Domains
-TAILSCALE_DOMAIN=host.tailnet.ts.net
+TAILSCALE_DOMAIN=ts.example.com
 EXTERNAL_DOMAIN=example.com
 
 # Storage
@@ -440,7 +375,7 @@ Notes:
 ### `kiwix/.env.example`
 
 ```dotenv
-PUBLIC_DOMAIN=example.com
+TAILSCALE_DOMAIN=ts.example.com
 DATA_PATH=/media/huyen/MainDisk/kiwix
 ```
 
@@ -461,23 +396,37 @@ Update `command:` whenever you add, remove, or rename ZIM files.
 
 ### `tools/.env.example`
 
-The current tree has `tools/docker-compose.yml` with `config/convertx`, `config/microbin`, and `config/stirling`. The uploaded compose content only included the old Stirling PDF compose, while Homepage also references ConvertX and MicroBin. Keep this template and expand it if your actual `tools/docker-compose.yml` uses more variables.
-
 ```dotenv
-PUBLIC_DOMAIN=example.com
+TAILSCALE_DOMAIN=ts.example.com
 
-# Add only if your tools compose uses them
-CONVERTX_PORT=3000
-MICROBIN_PORT=8080
-STIRLING_PORT=8080
+# ConvertX
+CONVERTX_JWT_SECRET=replace-with-long-random-secret
+MAX_CONVERT_PROCESS=1
+
+# MicroBin auth
+MICROBIN_USER=replace-with-username
+MICROBIN_PASSWORD=replace-with-password
+```
+
+Recommended compose changes:
+
+```yaml
+convertx:
+  environment:
+    - JWT_SECRET=${CONVERTX_JWT_SECRET}
+    - MAX_CONVERT_PROCESS=${MAX_CONVERT_PROCESS:-1}
+
+microbin:
+  environment:
+    MICROBIN_PUBLIC_PATH: "https://paste.${TAILSCALE_DOMAIN}"
 ```
 
 Expected routes from Homepage:
 
 ```text
-https://pdf.${PUBLIC_DOMAIN}
-https://convert.${PUBLIC_DOMAIN}
-https://paste.${PUBLIC_DOMAIN}
+https://pdf.${TAILSCALE_DOMAIN}
+https://convert.${TAILSCALE_DOMAIN}
+https://paste.${TAILSCALE_DOMAIN}
 ```
 
 ### `recyclarr/.env.example`
@@ -496,6 +445,33 @@ RADARR_URL=http://radarr:7878
 RADARR_API_KEY=replace-with-radarr-api-key
 ```
 
+## Compose route examples after the domain rename
+
+These are the intended route patterns after the rename. Use `TAILSCALE_DOMAIN` for private/internal services, and use `EXTERNAL_DOMAIN` only on services you intentionally expose externally.
+
+```yaml
+# Internal-only examples
+- "traefik.http.routers.traefik.rule=Host(`traefik.${TAILSCALE_DOMAIN}`)"
+- "traefik.http.routers.homepage.rule=Host(`homepage.${TAILSCALE_DOMAIN}`) || Host(`${TAILSCALE_DOMAIN}`)"
+- "traefik.http.routers.qbit.rule=Host(`qbit.${TAILSCALE_DOMAIN}`)"
+- "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${TAILSCALE_DOMAIN}`)"
+- "traefik.http.routers.kiwix.rule=Host(`kiwix.${TAILSCALE_DOMAIN}`)"
+- "traefik.http.routers.microbin.rule=Host(`paste.${TAILSCALE_DOMAIN}`)"
+
+# Internal + external examples
+- "traefik.http.routers.immich.rule=Host(`immich.${TAILSCALE_DOMAIN}`) || Host(`immich.${EXTERNAL_DOMAIN}`)"
+- "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${TAILSCALE_DOMAIN}`) || Host(`nextcloud.${EXTERNAL_DOMAIN}`)"
+- "traefik.http.routers.collabora.rule=Host(`collabora.${TAILSCALE_DOMAIN}`) || Host(`collabora.${EXTERNAL_DOMAIN}`)"
+```
+
+Homepage should still use `HOMEPAGE_VAR_DOMAIN`, but compose should derive it from `TAILSCALE_DOMAIN`:
+
+```yaml
+environment:
+  HOMEPAGE_ALLOWED_HOSTS: "homepage.${TAILSCALE_DOMAIN},${TAILSCALE_DOMAIN}"
+  HOMEPAGE_VAR_DOMAIN: "${TAILSCALE_DOMAIN}"
+```
+
 ## Hardcoded values to fix or verify
 
 ### Beszel agent key, token, and disk paths
@@ -510,7 +486,7 @@ beszel-agent:
     LISTEN: ${BESZEL_AGENT_LISTEN:-45876}
     KEY: ${BESZEL_AGENT_KEY}
     TOKEN: ${BESZEL_AGENT_TOKEN}
-    HUB_URL: "https://beszel.${PUBLIC_DOMAIN}"
+    HUB_URL: "https://beszel.${TAILSCALE_DOMAIN}"
 ```
 
 Current host-specific disk mounts:
@@ -523,6 +499,20 @@ Current host-specific disk mounts:
 ```
 
 Verify these paths on every host. If the key/token were ever pushed publicly, rotate them in Beszel.
+
+### ConvertX JWT secret
+
+Move the hardcoded ConvertX `JWT_SECRET` into `tools/.env`:
+
+```dotenv
+CONVERTX_JWT_SECRET=replace-with-long-random-secret
+```
+
+Use it in compose:
+
+```yaml
+- JWT_SECRET=${CONVERTX_JWT_SECRET}
+```
 
 ### Intel GPU / `/dev/dri` assumptions
 
@@ -654,7 +644,7 @@ Review before exposing services publicly:
 
 ### qBittorrent + Gluetun
 
-- Open qBittorrent at `https://qbit.${PUBLIC_DOMAIN}`.
+- Open qBittorrent at `https://qbit.${TAILSCALE_DOMAIN}`.
 - Set the qBittorrent WebUI username/password to match `QBITTORRENT_USERNAME` and `QBITTORRENT_PASSWORD`.
 - Confirm Gluetun writes the forwarded port to `jellyfin-stack/config/gluetun/forwarded_port`.
 - Confirm `qbittorrent-port-updater` can log in and update qBittorrent's listening port.
@@ -674,14 +664,14 @@ Review before exposing services publicly:
 
 ### Jellyfin
 
-- Open `https://jellyfin.${PUBLIC_DOMAIN}`.
+- Open `https://jellyfin.${TAILSCALE_DOMAIN}`.
 - Add media libraries from `/media`.
 - For Intel hardware transcoding, verify Jellyfin can see `/dev/dri/renderD128`.
 - If transcoding fails after a host change, check `/dev/dri`, render group ID, and media permissions first.
 
 ### Seerr
 
-- Open `https://seerr.${PUBLIC_DOMAIN}`.
+- Open `https://seerr.${TAILSCALE_DOMAIN}`.
 - Connect it to Jellyfin, Sonarr, Sonarr Anime, and Radarr.
 - Change `TZ=Asia/Tashkent` to `TZ=Asia/Singapore` if the current value was accidental.
 
@@ -773,8 +763,8 @@ Check Traefik routing:
 
 ```bash
 docker logs traefik --tail=100
-curl -Ik https://traefik.${PUBLIC_DOMAIN}
-curl -Ik https://jellyfin.${PUBLIC_DOMAIN}
+curl -Ik https://traefik.${TAILSCALE_DOMAIN}
+curl -Ik https://jellyfin.${TAILSCALE_DOMAIN}
 ```
 
 Check Gluetun/qBit:

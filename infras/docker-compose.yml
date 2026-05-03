@@ -21,7 +21,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.dozzle.rule=Host(`dozzle.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.dozzle.entrypoints=websecure"
       - "traefik.http.routers.dozzle.tls=true"
       - "traefik.http.services.dozzle.loadbalancer.server.port=8080"
@@ -38,14 +38,14 @@ services:
       - ${JELLY_DATA_PATH}:/jelly-data:ro
       - ${THIRD_DISK_PATH}:/disk3:ro
     environment:
-      HOMEPAGE_ALLOWED_HOSTS: "homepage.${PUBLIC_DOMAIN},${PUBLIC_DOMAIN}" # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
-      HOMEPAGE_VAR_DOMAIN: "${PUBLIC_DOMAIN}"
+      HOMEPAGE_ALLOWED_HOSTS: "homepage.${TAILSCALE_DOMAIN},${TAILSCALE_DOMAIN}" # required, may need port. See gethomepage.dev/installation/#homepage_allowed_hosts
+      HOMEPAGE_VAR_DOMAIN: "${TAILSCALE_DOMAIN}"
     env_file:
       - .env
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.homepage.rule=Host(`homepage.${PUBLIC_DOMAIN}`) || Host(`${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.${TAILSCALE_DOMAIN}`) || Host(`${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
       - "traefik.http.routers.homepage.tls=true"
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
@@ -67,7 +67,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.filebrowser.rule=Host(`files.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.filebrowser.rule=Host(`files.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.filebrowser.entrypoints=websecure"
       - "traefik.http.routers.filebrowser.tls=true"
       - "traefik.http.services.filebrowser.loadbalancer.server.port=80"
@@ -88,7 +88,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.kuma.rule=Host(`kuma.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.kuma.rule=Host(`kuma.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.kuma.entrypoints=websecure"
       - "traefik.http.routers.kuma.tls=true"
       - "traefik.http.services.kuma.loadbalancer.server.port=3001"
@@ -128,7 +128,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.scrutiny.rule=Host(`scrutiny.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.scrutiny.rule=Host(`scrutiny.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.scrutiny.entrypoints=websecure"
       - "traefik.http.routers.scrutiny.tls=true"
       - "traefik.http.services.scrutiny.loadbalancer.server.port=8080"
@@ -146,7 +146,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.beszel.rule=Host(`beszel.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.beszel.rule=Host(`beszel.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.beszel.entrypoints=websecure"
       - "traefik.http.routers.beszel.tls=true"
       - "traefik.http.services.beszel.loadbalancer.server.port=8090"
@@ -168,4 +168,4 @@ services:
       LISTEN: 45876
       KEY: 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHRBd0MsCBNPQ1e5kTN4E/0EMTL7vGtlmwweKAyLFTYq'
       TOKEN: cad1ab16-977b-48e9-a59f-c855fa3beb33
-      HUB_URL: https://beszel.${PUBLIC_DOMAIN}
+      HUB_URL: https://beszel.${TAILSCALE_DOMAIN}

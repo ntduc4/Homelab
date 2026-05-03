@@ -37,7 +37,7 @@ services:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.service=api@internal"
