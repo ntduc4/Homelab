@@ -26,7 +26,7 @@ quicklaunch:
 layout:
   Tools:
     style: row
-    columns: 2
+    columns: 3
     icon: mdi-tools
   Media:
     style: row

@@ -12,6 +12,12 @@
         description: File Converter
         server: my-docker
         container: convertx
+    - MicroBin:
+        icon: microbin.png
+        href: https://paste.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Private Pastebin
+        server: my-docker
+        container: microbin
 
 - Media:
     - Jellyfin:
