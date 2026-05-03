@@ -89,6 +89,30 @@ services:
       - "traefik.http.routers.sonarr.service=sonarr"
       - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
 
+  sonarr-anime:
+    image: lscr.io/linuxserver/sonarr:latest
+    # image: ghcr.io/snaacky/sonarr:v4.0.17.809  # use this instead if you want the anime fork
+    container_name: sonarr-anime
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./config/sonarr-anime:/config
+      - ${MEDIA_PATH}:/media
+    restart: unless-stopped
+    ports:
+      - 8990:8989
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.sonarr-anime.rule=Host(`sonarr-anime.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.sonarr-anime.entrypoints=websecure"
+      - "traefik.http.routers.sonarr-anime.tls=true"
+      - "traefik.http.routers.sonarr-anime.service=sonarr-anime"
+      - "traefik.http.services.sonarr-anime.loadbalancer.server.port=8989"
+
   bazarr:
     image: lscr.io/linuxserver/bazarr:latest
     container_name: bazarr

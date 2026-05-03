@@ -80,6 +80,17 @@
           url: http://sonarr:8989
           key: {{HOMEPAGE_VAR_SONARR_KEY}}
 
+    - Sonarr Anime:
+        icon: sonarr.png
+        href: https://sonarr-anime.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Anime series
+        server: my-docker
+        container: sonarr-anime
+        widget:
+          type: sonarr
+          url: http://sonarr-anime:8989
+          key: {{HOMEPAGE_VAR_SONARR_ANIME_KEY}}
+
     - Radarr:
         icon: radarr.png
         href: https://radarr.{{HOMEPAGE_VAR_DOMAIN}}
