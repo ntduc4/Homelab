@@ -44,3 +44,44 @@ services:
       - "traefik.http.routers.convertx.tls=true"
       - "traefik.http.routers.convertx.service=convertx"
       - "traefik.http.services.convertx.loadbalancer.server.port=3000"
+
+  microbin:
+    image: danielszabo99/microbin:latest
+    container_name: microbin
+    restart: unless-stopped
+    volumes:
+      - ./config/microbin:/app/microbin_data
+    environment:
+      MICROBIN_PUBLIC_PATH: "https://paste.${PUBLIC_DOMAIN}"
+      MICROBIN_BIND: "0.0.0.0"
+      MICROBIN_PORT: "8080"
+
+      # Useful defaults
+      MICROBIN_TITLE: "Paste"
+      MICROBIN_HIGHLIGHTSYNTAX: "true"
+      MICROBIN_PRIVATE: "true"
+      MICROBIN_NO_LISTING: "true"
+      MICROBIN_QR: "true"
+      MICROBIN_ENABLE_BURN_AFTER: "true"
+      MICROBIN_DEFAULT_EXPIRY: "1week"
+
+      # Auth
+      MICROBIN_BASIC_AUTH_USERNAME: "${MICROBIN_USER}"
+      MICROBIN_BASIC_AUTH_PASSWORD: "${MICROBIN_PASSWORD}"
+
+      # Optional: disable file uploads if you only want text/logs
+      MICROBIN_NO_FILE_UPLOAD: "true"
+
+      # Optional privacy
+      MICROBIN_DISABLE_TELEMETRY: "true"
+      MICROBIN_DISABLE_UPDATE_CHECKING: "true"
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.microbin.rule=Host(`paste.${PUBLIC_DOMAIN}`)"
+      - "traefik.http.routers.microbin.entrypoints=websecure"
+      - "traefik.http.routers.microbin.tls=true"
+      - "traefik.http.routers.microbin.service=microbin"
+      - "traefik.http.services.microbin.loadbalancer.server.port=8080"
