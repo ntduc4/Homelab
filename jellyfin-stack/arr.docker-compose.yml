@@ -21,7 +21,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.${TAILSCALE_DOMAIN}`) || Host(`prowlarr.home.arpa`)"
       - "traefik.http.routers.prowlarr.entrypoints=websecure"
       - "traefik.http.routers.prowlarr.tls=true"
       - "traefik.http.routers.prowlarr.service=prowlarr"
@@ -60,7 +60,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.radarr.rule=Host(`radarr.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.${TAILSCALE_DOMAIN}`) || Host(`radarr.home.arpa`)"
       - "traefik.http.routers.radarr.entrypoints=websecure"
       - "traefik.http.routers.radarr.tls=true"
       - "traefik.http.routers.radarr.service=radarr"
@@ -83,7 +83,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.${TAILSCALE_DOMAIN}`) || Host(`sonarr.home.arpa`)"
       - "traefik.http.routers.sonarr.entrypoints=websecure"
       - "traefik.http.routers.sonarr.tls=true"
       - "traefik.http.routers.sonarr.service=sonarr"
@@ -107,7 +107,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.sonarr-anime.rule=Host(`sonarr-anime.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.sonarr-anime.rule=Host(`sonarr-anime.${TAILSCALE_DOMAIN}`) || Host(`anime.home.arpa`)"
       - "traefik.http.routers.sonarr-anime.entrypoints=websecure"
       - "traefik.http.routers.sonarr-anime.tls=true"
       - "traefik.http.routers.sonarr-anime.service=sonarr-anime"
@@ -130,7 +130,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.bazarr.rule=Host(`bazarr.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.${TAILSCALE_DOMAIN}`) || Host(`bazarr.home.arpa`)"
       - "traefik.http.routers.bazarr.entrypoints=websecure"
       - "traefik.http.routers.bazarr.tls=true"
       - "traefik.http.routers.bazarr.service=bazarr"

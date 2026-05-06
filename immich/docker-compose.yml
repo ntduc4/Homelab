@@ -36,7 +36,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.immich.rule=Host(`immich.${TAILSCALE_DOMAIN}`) || Host(`immich.${EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.immich.rule=Host(`immich.${TAILSCALE_DOMAIN}`) || Host(`immich.home.arpa`) || Host(`immich.${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.immich.entrypoints=websecure"
       - "traefik.http.routers.immich.tls=true"
       - "traefik.http.services.immich.loadbalancer.server.port=2283"

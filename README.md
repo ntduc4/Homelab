@@ -54,6 +54,7 @@ Current intended routing model:
 | Immich | `immich.${TAILSCALE_DOMAIN}` | `immich.${EXTERNAL_DOMAIN}` |
 | Nextcloud | `nextcloud.${TAILSCALE_DOMAIN}` | `nextcloud.${EXTERNAL_DOMAIN}` |
 | Collabora | `collabora.${TAILSCALE_DOMAIN}` | `collabora.${EXTERNAL_DOMAIN}` |
+| Forgejo | `git.${TAILSCALE_DOMAIN}` | `git.${EXTERNAL_DOMAIN}` |
 
 ## Prerequisites
 
@@ -818,7 +819,6 @@ infras/config/scrutiny
 tools/config/convertx
 tools/config/microbin
 tools/config/stirling
-recyclarr/config
 ```
 
 Recommended update flow:

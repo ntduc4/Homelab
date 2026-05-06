@@ -14,7 +14,7 @@ openssl req -new -x509 -days 3650 -key "$SCRIPT_DIR/certs/ca.key" \
 openssl genrsa -out "$SCRIPT_DIR/certs/local.key" 2048
 openssl req -new -key "$SCRIPT_DIR/certs/local.key" \
   -out "$SCRIPT_DIR/certs/local.csr" \
-  -subj "/CN=*.${PUBLIC_DOMAIN}"
+  -subj "/CN=*.${TAILSCALE_DOMAIN}"
 
 # 3. Sign with CA (825 day limit for mobile compatibility)
 openssl x509 -req -days 825 \
@@ -23,4 +23,4 @@ openssl x509 -req -days 825 \
   -CAkey "$SCRIPT_DIR/certs/ca.key" \
   -CAcreateserial \
   -out "$SCRIPT_DIR/certs/local.crt" \
-  -extfile <(printf "subjectAltName=DNS:*.${PUBLIC_DOMAIN},DNS:${PUBLIC_DOMAIN}")
+  -extfile <(printf "subjectAltName=DNS:*.${TAILSCALE_DOMAIN},DNS:${TAILSCALE_DOMAIN}")

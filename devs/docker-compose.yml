@@ -1,0 +1,55 @@
+name: devs
+
+networks:
+  proxy:
+    external: true
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:14
+    container_name: forgejo
+    restart: unless-stopped
+
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+
+      # Main URL (CHANGE HERE IF DON'T WANT TO EXPOSE)
+      - FORGEJO__server__DOMAIN=git.${EXTERNAL_DOMAIN}
+      - FORGEJO__server__ROOT_URL=https://git.${EXTERNAL_DOMAIN}/
+
+      # SSH clone/push URL shown by Forgejo (Hide in tailnet)
+      - FORGEJO__server__SSH_DOMAIN=git.${TAILSCALE_DOMAIN}
+      - FORGEJO__server__SSH_PORT=2107
+
+      # SQLite, lightweight default
+      - FORGEJO__database__DB_TYPE=sqlite3
+      - FORGEJO__database__SQLITE_JOURNAL_MODE=WAL
+
+      - FORGEJO__service__DISABLE_REGISTRATION=true
+      - FORGEJO__service__REQUIRE_SIGNIN_VIEW=false
+      - FORGEJO__service__SHOW_REGISTRATION_BUTTON=false
+      - FORGEJO__service__DEFAULT_USER_VISIBILITY=public
+      - FORGEJO__service__DEFAULT_ORG_VISIBILITY=public
+
+    volumes:
+      - ./data:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ${LFS_DATA_PATH}:/lfs
+
+    ports:
+      - "2107:22"
+
+    networks:
+      - proxy
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+
+      - "traefik.http.routers.forgejo.rule=Host(`git.${TAILSCALE_DOMAIN}`) || Host(`git.${EXTERNAL_DOMAIN}`) || Host(`git.home.arpa`)"
+      - "traefik.http.routers.forgejo.entrypoints=websecure"
+      - "traefik.http.routers.forgejo.tls=true"
+
+      - "traefik.http.services.forgejo.loadbalancer.server.port=3000"

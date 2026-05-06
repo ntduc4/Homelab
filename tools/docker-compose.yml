@@ -16,7 +16,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.stirling-pdf.rule=Host(`pdf.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.stirling-pdf.rule=Host(`pdf.${TAILSCALE_DOMAIN}`) || Host(`pdf.home.arpa`)"
       - "traefik.http.routers.stirling-pdf.entrypoints=websecure"
       - "traefik.http.routers.stirling-pdf.tls=true"
       - "traefik.http.routers.stirling-pdf.service=stirling-pdf"
@@ -39,7 +39,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.convertx.rule=Host(`convert.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.convertx.rule=Host(`convert.${TAILSCALE_DOMAIN}`) || Host(`convert.home.arpa`)"
       - "traefik.http.routers.convertx.entrypoints=websecure"
       - "traefik.http.routers.convertx.tls=true"
       - "traefik.http.routers.convertx.service=convertx"
@@ -80,7 +80,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.microbin.rule=Host(`paste.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.microbin.rule=Host(`paste.${TAILSCALE_DOMAIN}`) || Host(`paste.home.arpa`)"
       - "traefik.http.routers.microbin.entrypoints=websecure"
       - "traefik.http.routers.microbin.tls=true"
       - "traefik.http.routers.microbin.service=microbin"
