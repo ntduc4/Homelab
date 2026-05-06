@@ -28,6 +28,10 @@ layout:
     style: row
     columns: 3
     icon: mdi-tools
+  Dev Tools:
+    icon: mdi-source-branch
+  Archive:
+    icon: mdi-archive
   Media:
     style: row
     columns: 3

@@ -19,6 +19,7 @@
         server: my-docker
         container: microbin
 
+
 - Media:
     - Jellyfin:
         icon: jellyfin.png
@@ -56,6 +57,7 @@
           url: http://immich-server:2283
           key: {{HOMEPAGE_VAR_IMMICH_KEY}}
           version: 2
+
 
 - Media Management:
     - Seerr:
@@ -136,6 +138,7 @@
           username: {{HOMEPAGE_VAR_QBIT_USERNAME}}
           password: {{HOMEPAGE_VAR_QBIT_PASSWORD}}
 
+
 - Monitor:
     - Uptime Kuma:
         icon: uptime-kuma.png
@@ -179,6 +182,25 @@
         description: Container Logs
         server: my-docker
         container: dozzle
+
+
+- Dev Tools:
+    - Forgejo:
+        icon: forgejo.png
+        href: https://git.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Self-hosted Git Server
+        server: my-docker
+        container: forgejo
+
+
+- Archive:
+    - Kiwix:
+        icon: kiwix.png
+        href: https://kiwix.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Offline Knowledge Archive
+        server: my-docker
+        container: kiwix
+
 
 - Infrastructure:
     - Traefik:
