@@ -45,7 +45,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.homepage.rule=Host(`homepage.${TAILSCALE_DOMAIN}`) || Host(`homepage.home.arpa`) || Host(`${TAILSCALE_DOMAIN}`) || Host(`Host(home.arpa`)"
+      - "traefik.http.routers.homepage.rule=Host(`homepage.${TAILSCALE_DOMAIN}`) || Host(`homepage.home.arpa`) || Host(`${TAILSCALE_DOMAIN}`) || Host(`home.arpa`)"
       - "traefik.http.routers.homepage.entrypoints=websecure"
       - "traefik.http.routers.homepage.tls=true"
       - "traefik.http.services.homepage.loadbalancer.server.port=3000"
