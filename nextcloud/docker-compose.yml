@@ -53,7 +53,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.collabora.rule=Host(`collabora.${TAILSCALE_DOMAIN}`) || Host(`collabora.home.arpa`) || Host(`collabora.${EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.collabora.rule=Host(`collabora.${TAILSCALE_DOMAIN}`) || Host(`collabora.${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.collabora.entrypoints=websecure"
       - "traefik.http.routers.collabora.tls=true"
       - "traefik.http.services.collabora.loadbalancer.server.port=9980"
@@ -74,7 +74,7 @@ services:
       - MYSQL_USER=nextcloud
       - MYSQL_PASSWORD=${NC_MYSQL_PASSWORD}
       - MYSQL_DATABASE=nextcloud
-      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${TAILSCALE_DOMAIN} nextcloud-app nextcloud.${EXTERNAL_DOMAIN} nextcloud.home.arpa
+      - NEXTCLOUD_TRUSTED_DOMAINS=nextcloud.${TAILSCALE_DOMAIN} nextcloud-app nextcloud.${EXTERNAL_DOMAIN}
       - OVERWRITEPROTOCOL=https
       - NEXTCLOUD_HOSTNAME=nextcloud.${TAILSCALE_DOMAIN}
       - NC_default_phone_region=SG
@@ -94,7 +94,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${TAILSCALE_DOMAIN}`) || Host(`nextcloud.home.arpa`) || Host(`nextcloud.${EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${TAILSCALE_DOMAIN}`) || Host(`nextcloud.${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.nextcloud.entrypoints=websecure"
       - "traefik.http.routers.nextcloud.tls=true"
       - "traefik.http.routers.nextcloud.service=nextcloud"

@@ -48,7 +48,7 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
 
-      - "traefik.http.routers.forgejo.rule=Host(`git.${TAILSCALE_DOMAIN}`) || Host(`git.${EXTERNAL_DOMAIN}`) || Host(`git.home.arpa`)"
+      - "traefik.http.routers.forgejo.rule=Host(`git.${TAILSCALE_DOMAIN}`) || Host(`git.${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.forgejo.entrypoints=websecure"
       - "traefik.http.routers.forgejo.tls=true"
 

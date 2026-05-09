@@ -25,6 +25,12 @@ services:
       - "--providers.file.watch=true"
       - "--accesslog=true"
       - "--log.level=INFO"
+
+      - "--certificatesresolvers.cloudflare.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53"
     ports:
       - "80:80"
       - "443:443"
@@ -32,12 +38,17 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./config:/traefik:ro
-      - ./certs:/certs:ro
+      - ./lets-encrypt:/letsencrypt
     networks:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.${TAILSCALE_DOMAIN}`) || Host(`traefik.home.arpa`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.${TAILSCALE_DOMAIN}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=cloudflare"
+      - "traefik.http.routers.traefik.tls.domains[0].main=${TAILSCALE_DOMAIN}"
+      - "traefik.http.routers.traefik.tls.domains[0].sans=*.${TAILSCALE_DOMAIN}"
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
