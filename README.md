@@ -23,8 +23,8 @@ This version uses the updated domain naming:
 | `jellyfin-stack/` | `jellyfin.docker-compose.yml` | Jellyfin, Seerr | `jellyfin` |
 | `kiwix/` | `docker-compose.yml` | Kiwix Serve | `kiwix` |
 | `nextcloud/` | `docker-compose.yml` | Nextcloud, MariaDB, Redis, Imaginary, Collabora | `nextcloud` |
+| `devs/` | `docker-compose.yml` | Forgejo | `devs` |
 | `tools/` | `docker-compose.yml` | Stirling PDF, ConvertX, MicroBin | `tools` |
-| `recyclarr/` | `docker-compose.yml` | Recyclarr config sync | not currently in `dcm.sh` |
 
 Important naming detail: the folder is `infras/`, but the `dcm.sh` target is `infra`.
 
@@ -49,7 +49,7 @@ Current intended routing model:
 | Traefik dashboard | `traefik.${TAILSCALE_DOMAIN}` | none by default |
 | Infra apps | `homepage.${TAILSCALE_DOMAIN}`, `dozzle.${TAILSCALE_DOMAIN}`, `kuma.${TAILSCALE_DOMAIN}`, etc. | none by default |
 | Jellyfin stack | `jellyfin.${TAILSCALE_DOMAIN}`, `sonarr.${TAILSCALE_DOMAIN}`, `qbit.${TAILSCALE_DOMAIN}`, etc. | none by default |
-| Tools | `pdf.${TAILSCALE_DOMAIN}`, `convert.${TAILSCALE_DOMAIN}`, `paste.${TAILSCALE_DOMAIN}` | none by default |
+| Tools | `pdf.${TAILSCALE_DOMAIN}`, `convert.${TAILSCALE_DOMAIN}`, `paste.${TAILSCALE_DOMAIN}` | `paste.${EXTERNAL_DOMAIN}` |
 | Kiwix | `kiwix.${TAILSCALE_DOMAIN}` | none by default |
 | Immich | `immich.${TAILSCALE_DOMAIN}` | `immich.${EXTERNAL_DOMAIN}` |
 | Nextcloud | `nextcloud.${TAILSCALE_DOMAIN}` | `nextcloud.${EXTERNAL_DOMAIN}` |
@@ -133,7 +133,7 @@ Do **not** blindly ignore every `config/` folder if you intentionally version-co
 `dcm.sh` manages these stacks in this order:
 
 ```text
-traefik → qbit → arr → jellyfin → nextcloud → immich → kiwix → tools → infra → cloudflared
+traefik → qbit → arr → jellyfin → nextcloud → immich → devs → tools → kiwix → infra → cloudflared
 ```
 
 That means Traefik starts first so the shared external `proxy` network exists before the other stacks start.
@@ -162,16 +162,7 @@ chmod +x ./dcm.sh
 ./dcm.sh up infra
 ```
 
-`recyclarr/` is present in the repo, but it is not currently in `STACK_ORDER` or `STACK_DIRS`. To manage it with `dcm.sh`, add something like:
-
-```bash
-STACK_ORDER=(traefik qbit arr jellyfin nextcloud immich kiwix tools infra recyclarr cloudflared)
-
-STACK_DIRS=(
-  # existing entries...
-  [recyclarr]="recyclarr"
-)
-```
+`devs/` is already part of `dcm.sh` and starts before `tools/`.
 
 ## Manual startup order
 
@@ -186,8 +177,9 @@ cd ../jellyfin-stack && docker compose -f jellyfin.docker-compose.yml up -d
 
 cd ../nextcloud && docker compose up -d
 cd ../immich && docker compose up -d
-cd ../kiwix && docker compose up -d
+cd ../devs && docker compose up -d
 cd ../tools && docker compose up -d
+cd ../kiwix && docker compose up -d
 cd ../infras && docker compose up -d
 cd ../cloudflared && docker compose up -d
 ```
@@ -197,7 +189,7 @@ cd ../cloudflared && docker compose up -d
 | Variable | Used by | Meaning | Example |
 |---|---|---|---|
 | `TAILSCALE_DOMAIN` | Traefik routes, Homepage links, most internal services | Internal/Tailscale domain | `ts.example.com` |
-| `EXTERNAL_DOMAIN` | Immich, Nextcloud, Collabora | External public domain | `example.com` |
+| `EXTERNAL_DOMAIN` | Immich, Nextcloud, Collabora, Forgejo, externally exposed tools | External public domain | `example.com` |
 | `DATA_PATH` | Homepage, File Browser, Kiwix, Nextcloud | General data mount | `/media/huyen/MainDisk/data` |
 | `MEDIA_PATH` | qBit, Arr apps, Jellyfin | Shared media root | `/media/huyen/MainDisk/media` |
 | `JELLY_DATA_PATH` | Homepage, File Browser | Extra media/data mount | `/media/huyen/MainDisk/jelly-data` |
@@ -211,12 +203,14 @@ cd ../cloudflared && docker compose up -d
 
 ```dotenv
 TAILSCALE_DOMAIN=ts.example.com
+ACME_EMAIL=admin@example.com
+CF_DNS_API_TOKEN=replace-with-cloudflare-dns-api-token
 ```
 
 Notes:
 
 - `traefik/docker-compose.yml` creates the shared Docker network named `proxy`.
-- `traefik/config/tls.yml` and `traefik/certs/` must exist for the dynamic TLS config.
+- Traefik uses the Cloudflare DNS ACME resolver and stores certificates in `traefik/lets-encrypt/acme.json`.
 - Ports `80` and `443` must be free on the host.
 - The Traefik dashboard is routed through `traefik.${TAILSCALE_DOMAIN}`. Add authentication middleware before exposing it anywhere outside your trusted network.
 
@@ -301,6 +295,20 @@ Notes:
 - Homepage config references Stirling PDF, ConvertX, MicroBin, Jellyfin, Nextcloud, Immich, Seerr, Sonarr, Sonarr Anime, Radarr, Bazarr, Prowlarr, qBittorrent, Uptime Kuma, Scrutiny, Beszel, Dozzle, Traefik, Gluetun, and File Browser.
 - Dozzle has shell/actions enabled and mounts the Docker socket. Keep it authenticated.
 - Uptime Kuma and Beszel currently use `TZ=UTC`; change to `Asia/Singapore` if you want local timestamps.
+
+### `devs/.env.example`
+
+```dotenv
+TAILSCALE_DOMAIN=ts.example.com
+EXTERNAL_DOMAIN=example.com
+LFS_DATA_PATH=/path/to/your/partition
+```
+
+Notes:
+
+- Forgejo listens on `git.${TAILSCALE_DOMAIN}` and `git.${EXTERNAL_DOMAIN}`.
+- The web root URL is set to the external domain, while the advertised SSH clone host stays on the Tailscale domain.
+- Host port `2107` is mapped to container SSH port `22`.
 
 ### `jellyfin-stack/.env.example`
 
@@ -399,6 +407,7 @@ Update `command:` whenever you add, remove, or rename ZIM files.
 
 ```dotenv
 TAILSCALE_DOMAIN=ts.example.com
+EXTERNAL_DOMAIN=example.com
 
 # ConvertX
 CONVERTX_JWT_SECRET=replace-with-long-random-secret
@@ -409,19 +418,6 @@ MICROBIN_USER=replace-with-username
 MICROBIN_PASSWORD=replace-with-password
 ```
 
-Recommended compose changes:
-
-```yaml
-convertx:
-  environment:
-    - JWT_SECRET=${CONVERTX_JWT_SECRET}
-    - MAX_CONVERT_PROCESS=${MAX_CONVERT_PROCESS:-1}
-
-microbin:
-  environment:
-    MICROBIN_PUBLIC_PATH: "https://paste.${TAILSCALE_DOMAIN}"
-```
-
 Expected routes from Homepage:
 
 ```text
@@ -430,21 +426,11 @@ https://convert.${TAILSCALE_DOMAIN}
 https://paste.${TAILSCALE_DOMAIN}
 ```
 
-### `recyclarr/.env.example`
+Notes:
 
-Your shown tree does not include a `recyclarr/.env.example`. If `recyclarr/docker-compose.yml` uses `${...}` variables, add one. Common candidates are API keys and URLs for Sonarr/Radarr.
-
-Example placeholder:
-
-```dotenv
-# Only include these if your recyclarr compose/config references env vars.
-SONARR_URL=http://sonarr:8989
-SONARR_API_KEY=replace-with-sonarr-api-key
-SONARR_ANIME_URL=http://sonarr-anime:8989
-SONARR_ANIME_API_KEY=replace-with-sonarr-anime-api-key
-RADARR_URL=http://radarr:7878
-RADARR_API_KEY=replace-with-radarr-api-key
-```
+- `paste.${TAILSCALE_DOMAIN}` and `paste.${EXTERNAL_DOMAIN}` both route to MicroBin.
+- MicroBin includes built-in URL shortening, but the current Traefik rule only exposes the `paste.*` hostnames.
+- `MICROBIN_PUBLIC_PATH` is set to `https://paste.${EXTERNAL_DOMAIN}` so generated links use the external paste hostname by default.
 
 ## Compose route examples after the domain rename
 
@@ -457,12 +443,15 @@ These are the intended route patterns after the rename. Use `TAILSCALE_DOMAIN` f
 - "traefik.http.routers.qbit.rule=Host(`qbit.${TAILSCALE_DOMAIN}`)"
 - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.${TAILSCALE_DOMAIN}`)"
 - "traefik.http.routers.kiwix.rule=Host(`kiwix.${TAILSCALE_DOMAIN}`)"
-- "traefik.http.routers.microbin.rule=Host(`paste.${TAILSCALE_DOMAIN}`)"
+- "traefik.http.routers.stirling-pdf.rule=Host(`pdf.${TAILSCALE_DOMAIN}`)"
+- "traefik.http.routers.convertx.rule=Host(`convert.${TAILSCALE_DOMAIN}`)"
 
 # Internal + external examples
+- "traefik.http.routers.microbin.rule=Host(`paste.${TAILSCALE_DOMAIN}`) || Host(`paste.${EXTERNAL_DOMAIN}`)"
 - "traefik.http.routers.immich.rule=Host(`immich.${TAILSCALE_DOMAIN}`) || Host(`immich.${EXTERNAL_DOMAIN}`)"
 - "traefik.http.routers.nextcloud.rule=Host(`nextcloud.${TAILSCALE_DOMAIN}`) || Host(`nextcloud.${EXTERNAL_DOMAIN}`)"
 - "traefik.http.routers.collabora.rule=Host(`collabora.${TAILSCALE_DOMAIN}`) || Host(`collabora.${EXTERNAL_DOMAIN}`)"
+- "traefik.http.routers.forgejo.rule=Host(`git.${TAILSCALE_DOMAIN}`) || Host(`git.${EXTERNAL_DOMAIN}`)"
 ```
 
 Homepage should still use `HOMEPAGE_VAR_DOMAIN`, but compose should derive it from `TAILSCALE_DOMAIN`:
@@ -503,13 +492,13 @@ Verify these paths on every host. If the key/token were ever pushed publicly, ro
 
 ### ConvertX JWT secret
 
-Move the hardcoded ConvertX `JWT_SECRET` into `tools/.env`:
+Set the ConvertX `JWT_SECRET` in `tools/.env`:
 
 ```dotenv
 CONVERTX_JWT_SECRET=replace-with-long-random-secret
 ```
 
-Use it in compose:
+Compose should use:
 
 ```yaml
 - JWT_SECRET=${CONVERTX_JWT_SECRET}
@@ -624,8 +613,8 @@ Review before exposing services publicly:
 1. Clone/copy the repo to the server.
 2. Create `.env` from `.env.example` in every stack folder.
 3. Fill domain, storage path, password, token, and API key values.
-4. Run `traefik/create-cert.sh` or place your real certificates into `traefik/certs`.
-5. Verify `traefik/config/tls.yml` references the correct cert files.
+4. Set `ACME_EMAIL` and `CF_DNS_API_TOKEN` in `traefik/.env`.
+5. Make sure `traefik/lets-encrypt/` exists and `acme.json` is writable by the Traefik container.
 6. Verify `/dev/net/tun` exists for Gluetun.
 7. Verify `/dev/dri` and render group for Jellyfin/Immich.
 8. Verify Scrutiny disk devices or switch to `/dev/disk/by-id`.
@@ -635,11 +624,12 @@ Review before exposing services publicly:
 12. Start Jellyfin and configure libraries.
 13. Start Nextcloud and finish first-time setup.
 14. Start Immich and finish first-time setup.
-15. Start Kiwix after confirming `.zim` files exist.
+15. Start `devs/` if you use Forgejo.
 16. Start `tools/`.
-17. Start `infras/`.
-18. Start Cloudflared if using Cloudflare Tunnel.
-19. Generate API keys/app passwords for Homepage widgets and add them to `infras/.env`.
+17. Start Kiwix after confirming `.zim` files exist.
+18. Start `infras/`.
+19. Start Cloudflared if using Cloudflare Tunnel.
+20. Generate API keys/app passwords for Homepage widgets and add them to `infras/.env`.
 
 ## App-specific post-setup notes
 
@@ -688,6 +678,17 @@ Review before exposing services publicly:
 - Create an API key for Homepage.
 - Confirm `immich_machine_learning` starts with the OpenVINO image and can access `/dev/dri`.
 
+### Forgejo
+
+- Open `https://git.${TAILSCALE_DOMAIN}` or `https://git.${EXTERNAL_DOMAIN}`.
+- Verify the Forgejo SSH clone host shows `git.${TAILSCALE_DOMAIN}:2107`.
+- Confirm `${LFS_DATA_PATH}` exists and is writable before enabling large file storage.
+
+### Tools
+
+- Open MicroBin at `https://paste.${TAILSCALE_DOMAIN}` or `https://paste.${EXTERNAL_DOMAIN}`.
+- Use the same MicroBin UI for both pastes and built-in shortened URLs.
+
 ### Homepage
 
 Homepage config uses `{{HOMEPAGE_VAR_*}}` placeholders. Fill the matching values in `infras/.env`.
@@ -718,8 +719,8 @@ Suggested internal monitor URLs:
 ```text
 http://beszel:8090
 http://stirling-pdf:8080
-http://convertx:<port>
-http://microbin:<port>
+http://convertx:3000
+http://microbin:8080
 http://jellyfin:8096
 http://sonarr:8989
 http://sonarr-anime:8989
@@ -747,6 +748,7 @@ cd ../cloudflared && docker compose config
 cd ../immich && docker compose config
 cd ../infras && docker compose config
 cd ../nextcloud && docker compose config
+cd ../devs && docker compose config
 cd ../kiwix && docker compose config
 cd ../tools && docker compose config
 ```
@@ -795,7 +797,7 @@ Back up at least these paths before large updates:
 
 ```text
 traefik/config
-traefik/certs
+traefik/lets-encrypt
 cloudflared/.env
 immich/.env
 immich database data path
@@ -837,14 +839,13 @@ For Immich, check the current Immich release notes before updating because Immic
 |---|---|
 | `network proxy declared as external, but could not be found` | Start `traefik` first or run `docker network create proxy` |
 | `./dcm.sh up infras` fails | Use target `infra`, not folder name `infras` |
-| Recyclarr does not start with `./dcm.sh up` | Add `recyclarr` to `STACK_ORDER` and `STACK_DIRS` |
 | Jellyfin cannot hardware transcode | `/dev/dri`, render group ID, `user: 1000:1000`, media permissions |
 | Immich ML fails | OpenVINO image suffix, `/dev/dri`, render group ID |
 | qBittorrent has no internet | Gluetun logs, VPN credentials, `/dev/net/tun` |
 | qBittorrent port not updating | `forwarded_port` file, qBit username/password, updater logs |
 | Nextcloud trusted domain error | `TAILSCALE_DOMAIN`, `EXTERNAL_DOMAIN`, `NEXTCLOUD_TRUSTED_DOMAINS` |
 | Collabora cannot connect | `aliasgroup1`, Traefik route, `extra_hosts` hardcoded IP |
+| MicroBin generated links use the wrong hostname | Check `MICROBIN_PUBLIC_PATH`; it controls the canonical URL MicroBin generates for pastes and short links |
 | Homepage widget broken | Missing `HOMEPAGE_VAR_*` env, wrong internal URL, API key mismatch |
 | Scrutiny missing disks | Wrong `/dev/sdX`; use `/dev/disk/by-id` |
 | Beszel only shows one disk/system | Extra filesystem mounts, Beszel `systemId`, agent key/token |
-

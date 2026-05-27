@@ -15,7 +15,7 @@
     - MicroBin:
         icon: microbin.png
         href: https://paste.{{HOMEPAGE_VAR_DOMAIN}}
-        description: Private Pastebin
+        description: Pastebin + Link Shortener
         server: my-docker
         container: microbin
 
@@ -233,4 +233,3 @@
         description: Web File Manager
         server: my-docker
         container: filebrowser
-

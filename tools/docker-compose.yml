@@ -29,8 +29,8 @@ services:
     # ports:
     #   - "3000:3000"
     environment:
-      - JWT_SECRET=hP83eH8b7REyepzmMjUAy8PVuFwVaY3EkaARhgKLbq4ivmM9Ysygpe4D1gTQ8fTz # will use randomUUID() if unset
-      - MAX_CONVERT_PROCESS=1
+      - JWT_SECRET=${CONVERTX_JWT_SECRET} # will use randomUUID() if unset
+      - MAX_CONVERT_PROCESS=${MAX_CONVERT_PROCESS:-1}
       # - HTTP_ALLOWED=true # uncomment this if accessing it over a non-https connection
     volumes:
       - ./config/convertx:/app/data
@@ -52,7 +52,7 @@ services:
     volumes:
       - ./config/microbin:/app/microbin_data
     environment:
-      MICROBIN_PUBLIC_PATH: "https://paste.${TAILSCALE_DOMAIN}"
+      MICROBIN_PUBLIC_PATH: "https://paste.${EXTERNAL_DOMAIN}"
       MICROBIN_BIND: "0.0.0.0"
       MICROBIN_PORT: "8080"
 
@@ -80,7 +80,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.microbin.rule=Host(`paste.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.microbin.rule=Host(`paste.${TAILSCALE_DOMAIN}`) || Host(`paste.${EXTERNAL_DOMAIN}`)"
       - "traefik.http.routers.microbin.entrypoints=websecure"
       - "traefik.http.routers.microbin.tls=true"
       - "traefik.http.routers.microbin.service=microbin"
