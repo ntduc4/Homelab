@@ -1,0 +1,52 @@
+name: books
+
+networks:
+  proxy:
+    external: true
+
+services:
+  lazylibrarian:
+    image: lscr.io/linuxserver/lazylibrarian:latest
+    container_name: lazylibrarian
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Singapore
+    volumes:
+      - ./config/lazylibrarian:/config
+      - ${MEDIA_PATH}:/media
+    networks:
+      - proxy
+    mem_limit: 512m
+    memswap_limit: 512m
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.lazylibrarian.rule=Host(`books-arr.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.lazylibrarian.entrypoints=websecure"
+      - "traefik.http.routers.lazylibrarian.tls=true"
+      - "traefik.http.services.lazylibrarian.loadbalancer.server.port=5299"
+
+  kavita:
+    image: lscr.io/linuxserver/kavita:latest
+    container_name: kavita
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Singapore
+    volumes:
+      - ./config/kavita:/config
+      - ${MEDIA_PATH}/books:/data
+    networks:
+      - proxy
+    mem_limit: 1g
+    memswap_limit: 1g
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.kavita.rule=Host(`books.${TAILSCALE_DOMAIN}`)"
+      - "traefik.http.routers.kavita.entrypoints=websecure"
+      - "traefik.http.routers.kavita.tls=true"
+      - "traefik.http.services.kavita.loadbalancer.server.port=5000"
