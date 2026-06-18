@@ -38,7 +38,7 @@ services:
       - TZ=Asia/Singapore
     volumes:
       - ./config/kavita:/config
-      - ${MEDIA_PATH}/books:/data
+      - ${MEDIA_PATH}/books:/media/books
     networks:
       - proxy
     mem_limit: 1g
