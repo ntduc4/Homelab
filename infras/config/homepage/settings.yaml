@@ -34,7 +34,7 @@ layout:
     icon: mdi-archive
   Media:
     style: row
-    columns: 3
+    columns: 4
     icon: mdi-play-circle
   Media Management:
     style: row

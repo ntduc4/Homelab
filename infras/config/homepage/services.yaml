@@ -58,6 +58,18 @@
           key: {{HOMEPAGE_VAR_IMMICH_KEY}}
           version: 2
 
+    - Kavita:
+        icon: kavita.png
+        href: https://books.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Books & Manga Reader
+        server: my-docker
+        container: kavita
+        widget:
+          type: kavita
+          url: http://kavita:5000
+          username: {{HOMEPAGE_VAR_KAVITA_USERNAME}}
+          password: {{HOMEPAGE_VAR_KAVITA_PASSWORD}}
+
 
 - Media Management:
     - Seerr:
@@ -125,6 +137,13 @@
           type: prowlarr
           url: http://prowlarr:9696
           key: {{HOMEPAGE_VAR_PROWLARR_KEY}}
+
+    - LazyLibrarian:
+        icon: lazylibrarian.png
+        href: https://books-arr.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Book Manager
+        server: my-docker
+        container: lazylibrarian
 
     - qBittorrent:
         icon: qbittorrent.png
