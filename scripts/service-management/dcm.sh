@@ -10,7 +10,7 @@ BASE_DIR="${DCM_BASE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
 
 # Stack order: traefik first up, last down
 # To add a new stack: append to STACK_ORDER and add an entry in STACK_DIRS (and optionally STACK_FILES)
-STACK_ORDER=(traefik qbit arr jellyfin books nextcloud immich devs tools kiwix infra cloudflared)
+STACK_ORDER=(traefik qbit arr jellyfin books nextcloud immich devs tools ai kiwix infra cloudflared)
 
 declare -A STACK_DIRS=(
     [traefik]="traefik"
@@ -25,6 +25,7 @@ declare -A STACK_DIRS=(
     [cloudflared]="cloudflared"
     [devs]="devs"
     [books]="books"
+    [ai]="ai"
 )
 
 # Optional: override compose files per stack (space-separated)

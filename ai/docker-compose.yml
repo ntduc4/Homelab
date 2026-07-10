@@ -1,0 +1,95 @@
+name: ai-stack
+
+networks:
+  proxy:
+    external: true
+  ai-internal:
+
+services:
+  litellm:
+    image: docker.litellm.ai/berriai/litellm:latest
+    container_name: litellm
+    restart: unless-stopped
+    command:
+      - "--config"
+      - "/app/config.yaml"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "4000"
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ}
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY}
+
+      # ChatGPT subscription OAuth token storage
+      CHATGPT_TOKEN_DIR: /tokens
+      CHATGPT_AUTH_FILE: auth.json
+
+      # Reduce noisy logging; don't enable debug unless troubleshooting
+      LITELLM_LOG: ${LITELLM_LOG:-ERROR}
+    volumes:
+      - ./config/litellm/config.yaml:/app/config.yaml:ro
+      - ./config/litellm-tokens:/tokens
+    networks:
+      - ai-internal
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    depends_on:
+      - litellm
+    env_file:
+      - .env
+    environment:
+      TZ: ${TZ}
+
+      # Public URL
+      WEBUI_URL: https://ai.${EXTERNAL_DOMAIN}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+
+      # OpenAI-compatible backend = LiteLLM
+      ENABLE_OPENAI_API: "true"
+      OPENAI_API_BASE_URLS: http://litellm:4000/v1
+      OPENAI_API_KEYS: ${LITELLM_MASTER_KEY}
+
+      # Disable Ollama unless you add it later
+      ENABLE_OLLAMA_API: "false"
+
+      # Public exposure hardening
+      ENABLE_SIGNUP: "false"
+      DEFAULT_USER_ROLE: pending
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      WEBUI_SESSION_COOKIE_SECURE: "true"
+      WEBUI_SESSION_COOKIE_SAME_SITE: strict
+      WEBUI_AUTH_COOKIE_SECURE: "true"
+      WEBUI_AUTH_COOKIE_SAME_SITE: strict
+
+      # Do not let users generate API keys by default
+      ENABLE_API_KEYS: "false"
+      USER_PERMISSIONS_FEATURES_API_KEYS: "false"
+
+      # Disable direct external tool/server connections by default
+      ENABLE_DIRECT_CONNECTIONS: "false"
+
+      # Keep OpenAI passthrough disabled; avoids exposing arbitrary upstream routes
+      ENABLE_OPENAI_API_PASSTHROUGH: "false"
+
+      # Optional: force env-file managed config instead of DB-persisted config.
+      # Leave as true unless you specifically want compose to override Admin UI every boot.
+      ENABLE_PERSISTENT_CONFIG: "true"
+
+    volumes:
+      - ./config/open-webui:/app/backend/data
+    networks:
+      - ai-internal
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.open-webui.rule=Host(`ai.${TAILSCALE_DOMAIN}`) || Host(`ai.${EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.open-webui.entrypoints=websecure"
+      - "traefik.http.routers.open-webui.tls=true"
+      - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
