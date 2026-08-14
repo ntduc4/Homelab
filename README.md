@@ -23,7 +23,7 @@ This version uses the updated domain naming:
 | `jellyfin-stack/` | `jellyfin.docker-compose.yml` | Jellyfin, Seerr | `jellyfin` |
 | `kiwix/` | `docker-compose.yml` | Kiwix Serve | `kiwix` |
 | `nextcloud/` | `docker-compose.yml` | Nextcloud, MariaDB, Redis, Imaginary, Collabora | `nextcloud` |
-| `devs/` | `docker-compose.yml` | Forgejo | `devs` |
+| `devs/` | `docker-compose.yml` | Forgejo, Bambuddy, OrcaSlicer API sidecar | `devs` |
 | `tools/` | `docker-compose.yml` | Stirling PDF, ConvertX, MicroBin | `tools` |
 
 Important naming detail: the folder is `infras/`, but the `dcm.sh` target is `infra`.
@@ -51,6 +51,7 @@ Current intended routing model:
 | Jellyfin stack | `jellyfin.${TAILSCALE_DOMAIN}`, `sonarr.${TAILSCALE_DOMAIN}`, `qbit.${TAILSCALE_DOMAIN}`, etc. | none by default |
 | Tools | `pdf.${TAILSCALE_DOMAIN}`, `convert.${TAILSCALE_DOMAIN}`, `paste.${TAILSCALE_DOMAIN}` | `paste.${EXTERNAL_DOMAIN}` |
 | Kiwix | `kiwix.${TAILSCALE_DOMAIN}` | none by default |
+| Bambuddy | `bambuddy.${TAILSCALE_DOMAIN}` | `bambuddy.${EXTERNAL_DOMAIN}` |
 | Immich | `immich.${TAILSCALE_DOMAIN}` | `immich.${EXTERNAL_DOMAIN}` |
 | Nextcloud | `nextcloud.${TAILSCALE_DOMAIN}` | `nextcloud.${EXTERNAL_DOMAIN}` |
 | Collabora | `collabora.${TAILSCALE_DOMAIN}` | `collabora.${EXTERNAL_DOMAIN}` |
@@ -133,7 +134,7 @@ Do **not** blindly ignore every `config/` folder if you intentionally version-co
 `dcm.sh` manages these stacks in this order:
 
 ```text
-traefik → qbit → arr → jellyfin → nextcloud → immich → devs → tools → kiwix → infra → cloudflared
+traefik → qbit → arr → jellyfin → books → nextcloud → immich → devs → tools → ai → kiwix → infra → cloudflared
 ```
 
 That means Traefik starts first so the shared external `proxy` network exists before the other stacks start.
@@ -304,6 +305,28 @@ Notes:
 TAILSCALE_DOMAIN=ts.example.com
 EXTERNAL_DOMAIN=example.com
 LFS_DATA_PATH=/path/to/your/partition
+
+# Shared service defaults
+TZ=Asia/Singapore
+PUID=1000
+PGID=1000
+
+# Bambuddy
+BAMBUDDY_VERSION=latest
+BAMBUDDY_WEB_PORT=8000
+
+# Required for Bambuddy virtual-printer FTP passive mode in Docker bridge mode.
+# Use this host's Tailscale IP for remote printing from anywhere, e.g. 100.x.y.z.
+VIRTUAL_PRINTER_PASV_ADDRESS=100.x.y.z
+
+# Proxy Mode can use the full 50000-50100 passive FTP range.
+BAMBUDDY_FTP_PASSIVE_RANGE=50000-50100
+BAMBUDDY_EXTERNAL_ROOTS=
+
+# Bambuddy server-side slicer sidecar. Orca is the active default.
+SIDECAR_TAG=latest
+ORCA_API_PORT=3003
+MAX_MODEL_UPLOAD_MB=512
 ```
 
 Notes:
@@ -311,6 +334,13 @@ Notes:
 - Forgejo listens on `git.${TAILSCALE_DOMAIN}` and `git.${EXTERNAL_DOMAIN}`.
 - The web root URL is set to the external domain, while the advertised SSH clone host stays on the Tailscale domain.
 - Host port `2107` is mapped to container SSH port `22`.
+- Bambuddy listens on `bambuddy.${TAILSCALE_DOMAIN}` and `bambuddy.${EXTERNAL_DOMAIN}`.
+- Bambuddy's web UI is also reachable directly on `${BAMBUDDY_WEB_PORT:-8000}`.
+- Bambuddy uses Docker bridge networking instead of upstream `network_mode: host` so it fits this Traefik-based homelab. Printer discovery may be limited; add printers by IP if discovery does not work.
+- Raw virtual-printer ports are published on the host because Bambu Studio / OrcaSlicer do not send print jobs through HTTP(S): `3000`, `3002`, `2021/udp`, `8883`, `990`, `6000`, `322`, `2024-2026`, and `50000-50100` by default.
+- The host Tailscale socket is mounted at `/var/run/tailscale/tailscaled.sock` so Bambuddy can show the host's Tailscale IP on virtual-printer cards.
+- `orca-slicer-api` is the enabled server-side slicing sidecar. Bambuddy gets `SLICER_API_URL=http://orca-slicer-api:3003` inside Docker.
+- The Orca and Bambu Studio sidecar images are currently `linux/amd64` only. On ARM hosts, run the sidecar on a separate x86_64 machine and point Bambuddy at that sidecar URL.
 
 ### `jellyfin-stack/.env.example`
 
@@ -433,6 +463,33 @@ Notes:
 - `paste.${TAILSCALE_DOMAIN}` and `paste.${EXTERNAL_DOMAIN}` both route to MicroBin.
 - MicroBin includes built-in URL shortening, but the current Traefik rule only exposes the `paste.*` hostnames.
 - `MICROBIN_PUBLIC_PATH` is set to `https://paste.${EXTERNAL_DOMAIN}` so generated links use the external paste hostname by default.
+
+## Bambuddy Remote Printing
+
+Recommended model for this homelab:
+
+1. Install and sign in to Tailscale on the homelab host.
+2. Install and sign in to Tailscale on every machine running Bambu Studio or OrcaSlicer.
+3. Set `VIRTUAL_PRINTER_PASV_ADDRESS` in `devs/.env` to the homelab host Tailscale IP from `tailscale ip -4`.
+4. Start the dev stack with `./scripts/service-management/dcm.sh up devs` or from `devs/` with `docker compose up -d`.
+5. Open `https://bambuddy.${TAILSCALE_DOMAIN}` or `https://bambuddy.${EXTERNAL_DOMAIN}` and add the real Bambu printer by LAN IP with Developer Mode access code.
+6. In Bambuddy, go to Settings → Virtual Printer, download the Bambuddy virtual-printer CA certificate, and append it to Bambu Studio / OrcaSlicer's `printer.cer` file on the slicer machine.
+7. Create a virtual printer in Proxy Mode, target the real printer, enable Tailscale integration on that VP card, and copy the shown `100.x.x.x` address.
+8. In Bambu Studio / OrcaSlicer, add a printer manually using that `100.x.x.x` address and the VP access code.
+
+Do not rely on `bambuddy.${EXTERNAL_DOMAIN}` or Cloudflare Tunnel for slicer print transport. Those routes are useful for the Bambuddy browser UI, but remote printing uses raw TLS/MQTT/FTPS/RTSP TCP ports that should stay private and reachable over Tailscale.
+
+## Bambuddy Server-Side Slicing
+
+The `devs` stack includes Bambuddy's optional OrcaSlicer API sidecar for built-in slicing.
+
+1. Start `devs` so both `bambuddy` and `orca-slicer-api` are running.
+2. In Bambuddy, open Settings → Workflow → Slicer.
+3. Set Preferred Slicer to OrcaSlicer.
+4. Turn on Use Slicer API.
+5. Use `http://orca-slicer-api:3003` as the sidecar URL if Bambuddy does not pick it up from `SLICER_API_URL` automatically.
+
+The sidecar health endpoint is available from the host at `http://localhost:${ORCA_API_PORT:-3003}/health`.
 
 ## Compose route examples after the domain rename
 
