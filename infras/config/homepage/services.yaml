@@ -211,6 +211,13 @@
         server: my-docker
         container: forgejo
 
+    - Bambuddy:
+        icon: https://raw.githubusercontent.com/maziggy/bambuddy/main/static/img/bambuddy_logo_dark.png
+        href: https://bambuddy.{{HOMEPAGE_VAR_DOMAIN}}
+        description: Bambu Lab Print Manager
+        server: my-docker
+        container: bambuddy
+
 
 - Archive:
     - Kiwix:

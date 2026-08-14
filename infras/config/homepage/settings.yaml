@@ -29,8 +29,12 @@ layout:
     columns: 3
     icon: mdi-tools
   Dev Tools:
+    style: row
+    columns: 2
     icon: mdi-source-branch
   Archive:
+    style: row
+    columns: 2
     icon: mdi-archive
   Media:
     style: row

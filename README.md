@@ -295,7 +295,7 @@ BESZEL_AGENT_TOKEN=replace-with-token-from-beszel-hub
 Notes:
 
 - `HOMEPAGE_VAR_DOMAIN` is created inside compose from `TAILSCALE_DOMAIN`.
-- Homepage config references Stirling PDF, ConvertX, MicroBin, Jellyfin, Nextcloud, Immich, Seerr, Sonarr, Sonarr Anime, Radarr, Bazarr, Prowlarr, qBittorrent, Uptime Kuma, Scrutiny, Beszel, Dozzle, Traefik, Gluetun, and File Browser.
+- Homepage config references Stirling PDF, ConvertX, MicroBin, Jellyfin, Nextcloud, Immich, Seerr, Sonarr, Sonarr Anime, Radarr, Bazarr, Prowlarr, qBittorrent, Uptime Kuma, Scrutiny, Beszel, Dozzle, Forgejo, Bambuddy, Traefik, Gluetun, and File Browser.
 - Dozzle has shell/actions enabled and mounts the Docker socket. Keep it authenticated.
 - Uptime Kuma and Beszel currently use `TZ=UTC`; change to `Asia/Singapore` if you want local timestamps.
 
