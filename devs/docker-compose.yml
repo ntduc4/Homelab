@@ -77,7 +77,7 @@ services:
       - PGID=${PGID:-1000}
       - PORT=8000
       - VIRTUAL_PRINTER_PASV_ADDRESS=${VIRTUAL_PRINTER_PASV_ADDRESS}
-      - SLICER_API_URL=http://orca-slicer-api:3003
+      - SLICER_API_URL=http://bambu-studio-api:3001
       - BAMBUDDY_EXTERNAL_ROOTS=${BAMBUDDY_EXTERNAL_ROOTS:-}
     volumes:
       - ./bambuddy/data:/app/data
@@ -95,14 +95,14 @@ services:
       - "traefik.http.services.bambuddy.loadbalancer.server.port=8000"
     stop_grace_period: 30s
 
-  orca-slicer-api:
-    image: ghcr.io/maziggy/orca-slicer-api:${SIDECAR_TAG:-latest}
-    container_name: orca-slicer-api
+  bambu-studio-api:
+    image: ghcr.io/maziggy/bambu-studio-api:${SIDECAR_TAG:-latest}
+    container_name: bambu-studio-api
     restart: unless-stopped
     environment:
-      - PORT=3003
+      - PORT=3001
       - MAX_MODEL_UPLOAD_MB=${MAX_MODEL_UPLOAD_MB:-512}
     ports:
-      - "${ORCA_API_PORT:-3003}:3003"
+      - "${BAMBU_API_PORT:-3001}:3001"
     networks:
       - proxy

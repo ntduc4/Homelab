@@ -23,7 +23,7 @@ This version uses the updated domain naming:
 | `jellyfin-stack/` | `jellyfin.docker-compose.yml` | Jellyfin, Seerr | `jellyfin` |
 | `kiwix/` | `docker-compose.yml` | Kiwix Serve | `kiwix` |
 | `nextcloud/` | `docker-compose.yml` | Nextcloud, MariaDB, Redis, Imaginary, Collabora | `nextcloud` |
-| `devs/` | `docker-compose.yml` | Forgejo, Bambuddy, OrcaSlicer API sidecar | `devs` |
+| `devs/` | `docker-compose.yml` | Forgejo, Bambuddy, Bambu Studio API sidecar | `devs` |
 | `tools/` | `docker-compose.yml` | Stirling PDF, ConvertX, MicroBin | `tools` |
 
 Important naming detail: the folder is `infras/`, but the `dcm.sh` target is `infra`.
@@ -323,9 +323,9 @@ VIRTUAL_PRINTER_PASV_ADDRESS=100.x.y.z
 BAMBUDDY_FTP_PASSIVE_RANGE=50000-50100
 BAMBUDDY_EXTERNAL_ROOTS=
 
-# Bambuddy server-side slicer sidecar. Orca is the active default.
+# Bambuddy server-side slicer sidecar. Bambu Studio is the active default.
 SIDECAR_TAG=latest
-ORCA_API_PORT=3003
+BAMBU_API_PORT=3004
 MAX_MODEL_UPLOAD_MB=512
 ```
 
@@ -339,7 +339,7 @@ Notes:
 - Bambuddy uses Docker bridge networking instead of upstream `network_mode: host` so it fits this Traefik-based homelab. Printer discovery may be limited; add printers by IP if discovery does not work.
 - Raw virtual-printer ports are published on the host because Bambu Studio / OrcaSlicer do not send print jobs through HTTP(S): `3000`, `3002`, `2021/udp`, `8883`, `990`, `6000`, `322`, `2024-2026`, and `50000-50100` by default.
 - The host Tailscale socket is mounted at `/var/run/tailscale/tailscaled.sock` so Bambuddy can show the host's Tailscale IP on virtual-printer cards.
-- `orca-slicer-api` is the enabled server-side slicing sidecar. Bambuddy gets `SLICER_API_URL=http://orca-slicer-api:3003` inside Docker.
+- `bambu-studio-api` is the enabled server-side slicing sidecar. Bambuddy gets `SLICER_API_URL=http://bambu-studio-api:3001` inside Docker.
 - The Orca and Bambu Studio sidecar images are currently `linux/amd64` only. On ARM hosts, run the sidecar on a separate x86_64 machine and point Bambuddy at that sidecar URL.
 
 ### `jellyfin-stack/.env.example`
@@ -481,15 +481,15 @@ Do not rely on `bambuddy.${EXTERNAL_DOMAIN}` or Cloudflare Tunnel for slicer pri
 
 ## Bambuddy Server-Side Slicing
 
-The `devs` stack includes Bambuddy's optional OrcaSlicer API sidecar for built-in slicing.
+The `devs` stack includes Bambuddy's optional Bambu Studio API sidecar for built-in slicing.
 
-1. Start `devs` so both `bambuddy` and `orca-slicer-api` are running.
+1. Start `devs` so both `bambuddy` and `bambu-studio-api` are running.
 2. In Bambuddy, open Settings → Workflow → Slicer.
-3. Set Preferred Slicer to OrcaSlicer.
+3. Set Preferred Slicer to Bambu Studio.
 4. Turn on Use Slicer API.
-5. Use `http://orca-slicer-api:3003` as the sidecar URL if Bambuddy does not pick it up from `SLICER_API_URL` automatically.
+5. Use `http://bambu-studio-api:3001` as the sidecar URL if Bambuddy does not pick it up from `SLICER_API_URL` automatically.
 
-The sidecar health endpoint is available from the host at `http://localhost:${ORCA_API_PORT:-3003}/health`.
+The sidecar health endpoint is available from the host at `http://localhost:${BAMBU_API_PORT:-3004}/health`.
 
 ## Compose route examples after the domain rename
 
