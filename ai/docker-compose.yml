@@ -35,61 +35,181 @@ services:
     networks:
       - ai-internal
 
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
+  onyx-api-server:
+    image: onyxdotapp/onyx-backend:${ONYX_IMAGE_TAG:-latest}
+    container_name: onyx-api-server
     restart: unless-stopped
-    depends_on:
-      - litellm
+    command: >
+      /bin/sh -c "alembic upgrade head &&
+      echo 'Starting Onyx API Server' &&
+      uvicorn onyx.main:app --host 0.0.0.0 --port 8080"
     env_file:
       - .env
+    depends_on:
+      - litellm
+      - onyx-postgres
+      - onyx-opensearch
+      - onyx-redis
+      - onyx-inference-model-server
     environment:
-      TZ: ${TZ}
-
-      # Public URL
-      WEBUI_URL: https://ai.${EXTERNAL_DOMAIN}
-      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
-
-      # OpenAI-compatible backend = LiteLLM
-      ENABLE_OPENAI_API: "true"
-      OPENAI_API_BASE_URLS: http://litellm:4000/v1
-      OPENAI_API_KEYS: ${LITELLM_MASTER_KEY}
-
-      # Disable Ollama unless you add it later
-      ENABLE_OLLAMA_API: "false"
-
-      # Public exposure hardening
-      ENABLE_SIGNUP: "false"
-      DEFAULT_USER_ROLE: pending
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
-      WEBUI_SESSION_COOKIE_SECURE: "true"
-      WEBUI_SESSION_COOKIE_SAME_SITE: strict
-      WEBUI_AUTH_COOKIE_SECURE: "true"
-      WEBUI_AUTH_COOKIE_SAME_SITE: strict
-
-      # Do not let users generate API keys by default
-      ENABLE_API_KEYS: "false"
-      USER_PERMISSIONS_FEATURES_API_KEYS: "false"
-
-      # Disable direct external tool/server connections by default
-      ENABLE_DIRECT_CONNECTIONS: "false"
-
-      # Keep OpenAI passthrough disabled; avoids exposing arbitrary upstream routes
-      ENABLE_OPENAI_API_PASSTHROUGH: "false"
-
-      # Optional: force env-file managed config instead of DB-persisted config.
-      # Leave as true unless you specifically want compose to override Admin UI every boot.
-      ENABLE_PERSISTENT_CONFIG: "true"
-
+      AUTH_TYPE: ${ONYX_AUTH_TYPE:-basic}
+      USER_AUTH_SECRET: ${ONYX_USER_AUTH_SECRET}
+      WEB_DOMAIN: https://ai.${EXTERNAL_DOMAIN}
+      FILE_STORE_BACKEND: postgres
+      POSTGRES_HOST: onyx-postgres
+      POSTGRES_USER: ${ONYX_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${ONYX_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${ONYX_POSTGRES_DB:-postgres}
+      REDIS_HOST: onyx-redis
+      OPENSEARCH_HOST: onyx-opensearch
+      OPENSEARCH_ADMIN_PASSWORD: ${ONYX_OPENSEARCH_ADMIN_PASSWORD}
+      MODEL_SERVER_HOST: onyx-inference-model-server
+      INDEXING_MODEL_SERVER_HOST: onyx-indexing-model-server
+      LOG_LEVEL: ${ONYX_LOG_LEVEL:-info}
+      ENABLE_PAID_ENTERPRISE_EDITION_FEATURES: "false"
+      DISABLE_TELEMETRY: ${ONYX_DISABLE_TELEMETRY:-true}
     volumes:
-      - ./config/open-webui:/app/backend/data
+      - ./config/onyx/api-server-logs:/var/log/onyx
+      - ./config/onyx/file-system:/app/file-system
+    networks:
+      - ai-internal
+
+  onyx-background:
+    image: onyxdotapp/onyx-backend:${ONYX_IMAGE_TAG:-latest}
+    container_name: onyx-background
+    restart: unless-stopped
+    command: /app/scripts/supervisord_entrypoint.sh
+    env_file:
+      - .env
+    depends_on:
+      - onyx-api-server
+      - onyx-postgres
+      - onyx-opensearch
+      - onyx-redis
+      - onyx-inference-model-server
+      - onyx-indexing-model-server
+    environment:
+      AUTH_TYPE: ${ONYX_AUTH_TYPE:-basic}
+      USER_AUTH_SECRET: ${ONYX_USER_AUTH_SECRET}
+      FILE_STORE_BACKEND: postgres
+      POSTGRES_HOST: onyx-postgres
+      POSTGRES_USER: ${ONYX_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${ONYX_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${ONYX_POSTGRES_DB:-postgres}
+      REDIS_HOST: onyx-redis
+      OPENSEARCH_HOST: onyx-opensearch
+      OPENSEARCH_ADMIN_PASSWORD: ${ONYX_OPENSEARCH_ADMIN_PASSWORD}
+      MODEL_SERVER_HOST: onyx-inference-model-server
+      INDEXING_MODEL_SERVER_HOST: onyx-indexing-model-server
+      API_SERVER_PROTOCOL: http
+      API_SERVER_HOST: onyx-api-server
+      LOG_LEVEL: ${ONYX_LOG_LEVEL:-info}
+      ENABLE_PAID_ENTERPRISE_EDITION_FEATURES: "false"
+      DISABLE_TELEMETRY: ${ONYX_DISABLE_TELEMETRY:-true}
+    volumes:
+      - ./config/onyx/background-logs:/var/log/onyx
+      - ./config/onyx/file-system:/app/file-system
+    networks:
+      - ai-internal
+
+  onyx-web-server:
+    image: onyxdotapp/onyx-web-server:${ONYX_IMAGE_TAG:-latest}
+    container_name: onyx-web-server
+    restart: unless-stopped
+    depends_on:
+      - onyx-api-server
+    environment:
+      INTERNAL_URL: http://onyx-api-server:8080
+    networks:
+      - ai-internal
+
+  onyx-nginx:
+    image: nginx:1.25.5-alpine
+    container_name: onyx-nginx
+    restart: unless-stopped
+    depends_on:
+      - onyx-api-server
+      - onyx-web-server
+    volumes:
+      - ./config/onyx/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     networks:
       - ai-internal
       - proxy
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=proxy"
-      - "traefik.http.routers.open-webui.rule=Host(`ai.${TAILSCALE_DOMAIN}`) || Host(`ai.${EXTERNAL_DOMAIN}`)"
-      - "traefik.http.routers.open-webui.entrypoints=websecure"
-      - "traefik.http.routers.open-webui.tls=true"
-      - "traefik.http.services.open-webui.loadbalancer.server.port=8080"
+      - "traefik.http.routers.onyx.rule=Host(`ai.${TAILSCALE_DOMAIN}`) || Host(`ai.${EXTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.onyx.entrypoints=websecure"
+      - "traefik.http.routers.onyx.tls=true"
+      - "traefik.http.services.onyx.loadbalancer.server.port=80"
+
+  onyx-postgres:
+    image: postgres:15.2-alpine
+    container_name: onyx-postgres
+    restart: unless-stopped
+    shm_size: 1g
+    command: -c 'max_connections=250'
+    environment:
+      POSTGRES_USER: ${ONYX_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${ONYX_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${ONYX_POSTGRES_DB:-postgres}
+    volumes:
+      - ./config/onyx/postgres:/var/lib/postgresql/data
+    networks:
+      - ai-internal
+
+  onyx-redis:
+    image: redis:7.4-alpine
+    container_name: onyx-redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    tmpfs:
+      - /data
+    networks:
+      - ai-internal
+
+  onyx-opensearch:
+    image: opensearchproject/opensearch:3.6.0
+    container_name: onyx-opensearch
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${ONYX_OPENSEARCH_ADMIN_PASSWORD}
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: ${ONYX_OPENSEARCH_JAVA_OPTS:--Xms2g -Xmx2g}
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./config/onyx/opensearch:/usr/share/opensearch/data
+    networks:
+      - ai-internal
+
+  onyx-inference-model-server:
+    image: onyxdotapp/onyx-model-server:${ONYX_IMAGE_TAG:-latest}
+    container_name: onyx-inference-model-server
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: ${ONYX_LOG_LEVEL:-info}
+    volumes:
+      - ./config/onyx/model-cache:/app/.cache/huggingface
+      - ./config/onyx/inference-model-server-logs:/var/log/onyx
+    networks:
+      - ai-internal
+
+  onyx-indexing-model-server:
+    image: onyxdotapp/onyx-model-server:${ONYX_IMAGE_TAG:-latest}
+    container_name: onyx-indexing-model-server
+    restart: unless-stopped
+    environment:
+      INDEXING_ONLY: "True"
+      LOG_LEVEL: ${ONYX_LOG_LEVEL:-info}
+    volumes:
+      - ./config/onyx/indexing-model-cache:/app/.cache/huggingface
+      - ./config/onyx/indexing-model-server-logs:/var/log/onyx
+    networks:
+      - ai-internal

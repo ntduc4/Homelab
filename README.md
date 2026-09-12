@@ -25,6 +25,7 @@ This version uses the updated domain naming:
 | `nextcloud/` | `docker-compose.yml` | Nextcloud, MariaDB, Redis, Imaginary, Collabora | `nextcloud` |
 | `devs/` | `docker-compose.yml` | Forgejo, Bambuddy, Bambu Studio API sidecar | `devs` |
 | `tools/` | `docker-compose.yml` | Stirling PDF, ConvertX, MicroBin | `tools` |
+| `ai/` | `docker-compose.yml` | LiteLLM, Onyx web/API/workers, Postgres, Redis, OpenSearch, model servers | `ai` |
 
 Important naming detail: the folder is `infras/`, but the `dcm.sh` target is `infra`.
 
