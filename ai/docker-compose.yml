@@ -1,8 +1,6 @@
 name: ai-stack
 
 networks:
-  proxy:
-    external: true
   ai-internal:
 
 services:
@@ -132,16 +130,12 @@ services:
       - onyx-web-server
     volumes:
       - ./config/onyx/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+    ports:
+      - "0.0.0.0:3000:80"
+
     networks:
       - ai-internal
-      - proxy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=proxy"
-      - "traefik.http.routers.onyx.rule=Host(`ai.${TAILSCALE_DOMAIN}`) || Host(`ai.${EXTERNAL_DOMAIN}`)"
-      - "traefik.http.routers.onyx.entrypoints=websecure"
-      - "traefik.http.routers.onyx.tls=true"
-      - "traefik.http.services.onyx.loadbalancer.server.port=80"
 
   onyx-postgres:
     image: postgres:15.2-alpine
