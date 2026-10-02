@@ -94,7 +94,7 @@ ls -lah /dev/disk/by-id/
 
 ## `.env.example` rule
 
-Every folder that has a compose file and requires variables should have a matching `.env.example`.
+Every folder that has a compose file and requires variables should have a matching `.env.example`. The repo root also has `.env.example` for `dcm.sh` machine-specific filters.
 
 Use this setup pattern:
 
@@ -162,6 +162,55 @@ chmod +x ./dcm.sh
 ./dcm.sh restart arr
 ./dcm.sh update jellyfin
 ./dcm.sh up infra
+```
+
+Stack filters:
+
+`dcm.sh` loads the repo-root `.env` before handling multi-stack commands. Use this to split stacks across machines without manually running each target.
+
+```dotenv
+# Empty include means all stacks.
+# Empty exclude means exclude nothing.
+# Values can be comma or space separated.
+# If a stack is in both lists, exclude wins.
+DCM_INCLUDE=
+DCM_EXCLUDE=ai
+```
+
+On the GMKtec, run everything except the AI stack:
+
+```dotenv
+DCM_INCLUDE=
+DCM_EXCLUDE=ai
+```
+
+On the AI machine, run only the AI stack:
+
+```dotenv
+DCM_INCLUDE=ai
+DCM_EXCLUDE=
+```
+
+The filters apply to all multi-stack commands:
+
+```bash
+./dcm.sh up
+./dcm.sh down
+./dcm.sh restart
+./dcm.sh update
+```
+
+Explicit single-stack commands ignore the global filters so you can still do targeted maintenance:
+
+```bash
+./dcm.sh restart ai
+./dcm.sh update jellyfin
+```
+
+Direct environment variables override the repo-root `.env` for one-off runs:
+
+```bash
+DCM_INCLUDE=ai DCM_EXCLUDE= ./dcm.sh up
 ```
 
 `devs/` is already part of `dcm.sh` and starts before `tools/`.

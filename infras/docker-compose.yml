@@ -117,9 +117,9 @@ services:
       - ./config/scrutiny/influxdb:/opt/scrutiny/influxdb
     devices:
       - /dev/sdb:/dev/sdb
-      - /dev/sdc:/dev/sdc
       - /dev/sdd:/dev/sdd
       - /dev/sde:/dev/sde
+      - /dev/sdf:/dev/sdf
     restart: unless-stopped
     networks:
       - proxy

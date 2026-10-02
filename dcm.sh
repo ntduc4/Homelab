@@ -5,8 +5,36 @@
 set -euo pipefail
 
 # ─── Configuration ────────────────────────────────────────────────────────────
-# Base directory: defaults to the directory containing this script
-BASE_DIR="${DCM_BASE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+# Repo/base directory: defaults to the git repo root, falling back to this script's directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${DCM_REPO_ROOT:-$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null || printf '%s' "$SCRIPT_DIR")}"
+BASE_DIR="${DCM_BASE_DIR:-$REPO_ROOT}"
+
+# Load repo-level defaults, including DCM_INCLUDE/DCM_EXCLUDE, before command handling.
+# Existing stack .env files are still loaded by Docker Compose from each stack directory.
+DCM_ENV_FILE="${DCM_ENV_FILE:-$REPO_ROOT/.env}"
+DCM_INCLUDE_WAS_SET=0
+DCM_EXCLUDE_WAS_SET=0
+if [[ ${DCM_INCLUDE+x} ]]; then
+    DCM_INCLUDE_WAS_SET=1
+    DCM_INCLUDE_FROM_ENV="$DCM_INCLUDE"
+fi
+if [[ ${DCM_EXCLUDE+x} ]]; then
+    DCM_EXCLUDE_WAS_SET=1
+    DCM_EXCLUDE_FROM_ENV="$DCM_EXCLUDE"
+fi
+if [[ -f "$DCM_ENV_FILE" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$DCM_ENV_FILE"
+    set +a
+fi
+if [[ "$DCM_INCLUDE_WAS_SET" -eq 1 ]]; then
+    DCM_INCLUDE="$DCM_INCLUDE_FROM_ENV"
+fi
+if [[ "$DCM_EXCLUDE_WAS_SET" -eq 1 ]]; then
+    DCM_EXCLUDE="$DCM_EXCLUDE_FROM_ENV"
+fi
 
 # Stack order: traefik first up, last down
 # To add a new stack: append to STACK_ORDER and add an entry in STACK_DIRS (and optionally STACK_FILES)
@@ -62,6 +90,8 @@ usage() {
     echo
     echo -e "${BOLD}Startup order:${RESET}  ${STACK_ORDER[*]}"
     echo -e "${BOLD}Shutdown order:${RESET} $(printf '%s\n' "${STACK_ORDER[@]}" | tac | tr '\n' ' ')"
+    echo -e "${BOLD}Active filter:${RESET} include='${DCM_INCLUDE:-}' exclude='${DCM_EXCLUDE:-}'"
+    echo -e "${BOLD}Filter vars:${RESET}   DCM_INCLUDE, DCM_EXCLUDE (comma or space separated; exclude wins)"
     echo
     echo -e "${BOLD}Examples:${RESET}"
     echo -e "  $(basename "$0") up"
@@ -72,6 +102,70 @@ usage() {
     echo -e "  $(basename "$0") update"
     echo -e "  $(basename "$0") update arr"
     exit 1
+}
+
+split_stack_list() {
+    local raw="$1"
+    raw="${raw//,/ }"
+    for name in $raw; do
+        printf '%s\n' "$name"
+    done
+}
+
+contains_stack() {
+    local needle="$1"
+    shift
+
+    local item
+    for item in "$@"; do
+        [[ "$item" == "$needle" ]] && return 0
+    done
+
+    return 1
+}
+
+validate_stack_filter() {
+    local var_name="$1"
+    local raw="$2"
+
+    [[ -z "$raw" ]] && return 0
+
+    local name
+    while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        if [[ -z "${STACK_DIRS[$name]:-}" ]]; then
+            echo -e "${RED}Error:${RESET} ${var_name} contains unknown stack '${name}'" >&2
+            exit 1
+        fi
+    done < <(split_stack_list "$raw")
+}
+
+selected_stacks() {
+    local include_raw="${DCM_INCLUDE:-}"
+    local exclude_raw="${DCM_EXCLUDE:-}"
+    local includes=()
+    local excludes=()
+
+    if [[ -n "$include_raw" ]]; then
+        mapfile -t includes < <(split_stack_list "$include_raw")
+    fi
+
+    if [[ -n "$exclude_raw" ]]; then
+        mapfile -t excludes < <(split_stack_list "$exclude_raw")
+    fi
+
+    local name
+    for name in "${STACK_ORDER[@]}"; do
+        if [[ ${#includes[@]} -gt 0 ]] && ! contains_stack "$name" "${includes[@]}"; then
+            continue
+        fi
+
+        if [[ ${#excludes[@]} -gt 0 ]] && contains_stack "$name" "${excludes[@]}"; then
+            continue
+        fi
+
+        printf '%s\n' "$name"
+    done
 }
 
 stack_up() {
@@ -189,49 +283,61 @@ if [[ -n "$TARGET" ]]; then
         update)  stack_update "$TARGET" ;;
     esac
 else
-    # All stacks — respect explicit order
+    # All selected stacks — respect explicit order
     FAILED=()
+    validate_stack_filter "DCM_INCLUDE" "${DCM_INCLUDE:-}"
+    validate_stack_filter "DCM_EXCLUDE" "${DCM_EXCLUDE:-}"
+    mapfile -t SELECTED_STACKS < <(selected_stacks)
+
+    if [[ ${#SELECTED_STACKS[@]} -eq 0 ]]; then
+        echo -e "${YELLOW}No stacks selected after applying DCM_INCLUDE/DCM_EXCLUDE.${RESET}"
+        exit 0
+    fi
+
+    if [[ -n "${DCM_INCLUDE:-}${DCM_EXCLUDE:-}" ]]; then
+        echo -e "${CYAN}Selected stacks:${RESET} ${SELECTED_STACKS[*]}"
+    fi
 
     if [[ "$COMMAND" == "update" ]]; then
-        echo -e "${CYAN}⟳ Updating all stacks${RESET}"
+        echo -e "${CYAN}⟳ Updating selected stacks${RESET}"
 
-        for name in "${STACK_ORDER[@]}"; do
+        for name in "${SELECTED_STACKS[@]}"; do
             stack_pull "$name" || FAILED+=("$name (pull)")
         done
 
         if [[ ${#FAILED[@]} -eq 0 ]]; then
-            echo -e "\n${CYAN}↺ Restarting all stacks after update${RESET}"
+            echo -e "\n${CYAN}↺ Restarting selected stacks after update${RESET}"
 
-            mapfile -t DOWN_ORDER < <(printf '%s\n' "${STACK_ORDER[@]}" | tac)
+            mapfile -t DOWN_ORDER < <(printf '%s\n' "${SELECTED_STACKS[@]}" | tac)
             for name in "${DOWN_ORDER[@]}"; do
                 stack_down "$name" || FAILED+=("$name (down)")
             done
 
             echo
-            for name in "${STACK_ORDER[@]}"; do
+            for name in "${SELECTED_STACKS[@]}"; do
                 stack_up "$name" || FAILED+=("$name (up)")
             done
         fi
     elif [[ "$COMMAND" == "restart" ]]; then
         # Down in reverse order, then up in forward order
-        echo -e "${CYAN}↺ Restarting all stacks${RESET}"
+        echo -e "${CYAN}↺ Restarting selected stacks${RESET}"
 
-        mapfile -t DOWN_ORDER < <(printf '%s\n' "${STACK_ORDER[@]}" | tac)
+        mapfile -t DOWN_ORDER < <(printf '%s\n' "${SELECTED_STACKS[@]}" | tac)
         for name in "${DOWN_ORDER[@]}"; do
             stack_down "$name" || FAILED+=("$name (down)")
         done
 
         echo
-        for name in "${STACK_ORDER[@]}"; do
+        for name in "${SELECTED_STACKS[@]}"; do
             stack_up "$name" || FAILED+=("$name (up)")
         done
     elif [[ "$COMMAND" == "down" ]]; then
-        mapfile -t ORDER < <(printf '%s\n' "${STACK_ORDER[@]}" | tac)
+        mapfile -t ORDER < <(printf '%s\n' "${SELECTED_STACKS[@]}" | tac)
         for name in "${ORDER[@]}"; do
             stack_down "$name" || FAILED+=("$name")
         done
     else
-        for name in "${STACK_ORDER[@]}"; do
+        for name in "${SELECTED_STACKS[@]}"; do
             stack_up "$name" || FAILED+=("$name")
         done
     fi
@@ -241,7 +347,7 @@ else
         echo -e "${RED}✗ Failed stacks: ${FAILED[*]}${RESET}"
         exit 1
     else
-        echo -e "${GREEN}✓ All stacks ${COMMAND} complete${RESET}"
+        echo -e "${GREEN}✓ Selected stacks ${COMMAND} complete${RESET}"
     fi
 
 fi
