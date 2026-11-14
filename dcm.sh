@@ -168,6 +168,41 @@ selected_stacks() {
     done
 }
 
+stack_uses_nas_media() {
+    local name="$1" key path line
+
+    case "$name" in
+        arr|jellyfin|books|infra) return 0 ;;
+        nextcloud|kiwix) key=DATA_PATH ;;
+        immich) key=UPLOAD_LOCATION ;;
+        devs) key=LFS_DATA_PATH ;;
+        *) return 1 ;;
+    esac
+
+    local env_file="$BASE_DIR/${STACK_DIRS[$name]}/.env"
+    [[ -f "$env_file" && -n "${NAS_MEDIA_MOUNT:-}" ]] || return 1
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ "$line" == "$key="* ]] || continue
+        path="${line#*=}"
+        path="${path#\"}"; path="${path%\"}"
+        path="${path#\'}"; path="${path%\'}"
+        [[ "$path" == "$NAS_MEDIA_MOUNT" || "$path" == "$NAS_MEDIA_MOUNT/"* ]] && return 0
+    done < "$env_file"
+
+    return 1
+}
+
+check_nas_media_mount() {
+    local nas_mount="${NAS_MEDIA_MOUNT:?Set NAS_MEDIA_MOUNT in the repo .env}"
+    local nas_source="${NAS_IP:?Set NAS_IP in the repo .env}:${NAS_MEDIA_EXPORT:?Set NAS_MEDIA_EXPORT in the repo .env}"
+
+    if [[ "$(findmnt -n -o SOURCE --mountpoint "$nas_mount")" != "$nas_source" ]]; then
+        echo -e "  ${RED}✗ NAS media is not mounted at ${nas_mount} (${nas_source})${RESET}" >&2
+        return 1
+    fi
+}
+
 stack_up() {
     local name="$1"
     local dir="$BASE_DIR/${STACK_DIRS[$name]}"
@@ -179,18 +214,10 @@ stack_up() {
         return 1
     fi
 
-    # Docker bind mounts an ordinary directory if the NFS mount is missing.
-    # Never start NAS-backed services on the underlying system filesystem.
-    case "$name" in
-        arr|jellyfin|books|infra)
-            local nas_mount="${NAS_MEDIA_MOUNT:?Set NAS_MEDIA_MOUNT in the repo .env}"
-            local nas_source="${NAS_IP:?Set NAS_IP in the repo .env}:${NAS_MEDIA_EXPORT:?Set NAS_MEDIA_EXPORT in the repo .env}"
-            if [[ "$(findmnt -n -o SOURCE --mountpoint "$nas_mount")" != "$nas_source" ]]; then
-                echo -e "  ${RED}✗ NAS media is not mounted at ${nas_mount} (${nas_source})${RESET}" >&2
-                return 1
-            fi
-            ;;
-    esac
+    # Never bind the empty local mount point when the NAS is unavailable.
+    if stack_uses_nas_media "$name"; then
+        check_nas_media_mount || return 1
+    fi
 
     cd "$dir"
 

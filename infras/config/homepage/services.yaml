@@ -153,7 +153,9 @@
         container: qbittorrent
         widget:
           type: qbittorrent
-          url: http://gluetun:8070
+          # Change depend on whether qbit on nas or this machine
+          # url: http://gluetun:8070
+          url: http://{{HOMEPAGE_VAR_NAS_IP}}:8070
           username: {{HOMEPAGE_VAR_QBIT_USERNAME}}
           password: {{HOMEPAGE_VAR_QBIT_PASSWORD}}
 
@@ -248,7 +250,8 @@
         # TODO: Config gluetun here
         widget:
           type: gluetun
-          url: http://gluetun:8000
+          url: http://{{HOMEPAGE_VAR_NAS_IP}}:8070
+          # url: http://gluetun:8000
           key: {{HOMEPAGE_VAR_GLUETUN_KEY}}
           version: 2
           fields: ["public_ip", "country", "region", "port_forwarded"]

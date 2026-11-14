@@ -25,7 +25,7 @@ Docker Compose services managed by `./dcm.sh`. Traefik provides the shared `prox
 ## Run it
 
 1. Install Docker Engine and the Compose plugin. Copy the repo-root `.env.example` and each stack's `.env.example` (if present) to `.env`, then fill in domains, storage paths, credentials, and host-specific devices. Keep real `.env` files and secrets out of git.
-2. Ensure required storage is mounted **before** starting containers. Set `NAS_IP`, `NAS_MEDIA_EXPORT`, and `NAS_MEDIA_MOUNT` in the repo-root `.env`; point the relevant stack `MEDIA_PATH`/`JELLY_DATA_PATH` values at that local mount. `dcm.sh` checks the NFS source before starting `arr`, `jellyfin`, `books`, or `infra`. The NFS mount must also be made persistent and available before Docker auto-restarts containers; direct `docker compose` commands bypass the check.
+2. Ensure required storage is mounted **before** starting containers. Set `NAS_IP`, `NAS_MEDIA_EXPORT`, and `NAS_MEDIA_MOUNT` in the repo-root `.env`; point the relevant stack storage paths at that local mount. `dcm.sh` checks the NFS source for `arr`, `jellyfin`, `books`, and `infra`, plus `nextcloud`, `immich`, `devs`, and `kiwix` after their data paths move to NAS. Make the mount persistent and available before Docker auto-restarts containers; direct `docker compose` commands bypass the check.
 3. Start Traefik first, then use the manager from the repo root:
 
 ```bash

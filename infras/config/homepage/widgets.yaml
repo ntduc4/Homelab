@@ -7,8 +7,6 @@
     disk:
       - /
       - /data
-      - /jelly-data
-      - /disk3
 
 - openmeteo:
     label: Singapore

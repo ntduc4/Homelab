@@ -1,0 +1,15 @@
+http:
+  routers:
+    qbit:
+      rule: 'Host(`qbit.{{ env "TAILSCALE_DOMAIN" }}`)'
+      entryPoints:
+        - websecure
+      tls: {}
+      service: qbit-nas
+
+  services:
+    qbit-nas:
+      loadBalancer:
+        passHostHeader: false
+        servers:
+          - url: 'http://{{ env "NAS_IP" }}:8070'

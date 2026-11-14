@@ -52,3 +52,5 @@ services:
       - "traefik.http.routers.traefik.tls.domains[0].sans=*.${TAILSCALE_DOMAIN}"
     environment:
       - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+      - TAILSCALE_DOMAIN=${TAILSCALE_DOMAIN}
+      - NAS_IP=${NAS_IP:?Set NAS_IP in traefik/.env}

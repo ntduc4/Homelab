@@ -1,2 +1,5 @@
 config/
+!traefik/config/
+traefik/config/*
+!traefik/config/qbit.yml
 .env
