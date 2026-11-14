@@ -49,7 +49,11 @@ services:
       # - TORRENTING_PORT=6881
     volumes:
       - ./config/qbittorrent:/config
-      - ${MEDIA_PATH}:/media
+      - type: bind
+        source: ${QBIT_MEDIA_PATH:?Set QBIT_MEDIA_PATH to the mounted qBittorrent media path}
+        target: /media
+        bind:
+          create_host_path: false
     mem_limit: 2g
     memswap_limit: 2g
     network_mode: "service:gluetun"

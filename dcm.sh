@@ -179,6 +179,19 @@ stack_up() {
         return 1
     fi
 
+    # Docker bind mounts an ordinary directory if the NFS mount is missing.
+    # Never start NAS-backed services on the underlying system filesystem.
+    case "$name" in
+        arr|jellyfin|books|infra)
+            local nas_mount="${NAS_MEDIA_MOUNT:?Set NAS_MEDIA_MOUNT in the repo .env}"
+            local nas_source="${NAS_IP:?Set NAS_IP in the repo .env}:${NAS_MEDIA_EXPORT:?Set NAS_MEDIA_EXPORT in the repo .env}"
+            if [[ "$(findmnt -n -o SOURCE --mountpoint "$nas_mount")" != "$nas_source" ]]; then
+                echo -e "  ${RED}✗ NAS media is not mounted at ${nas_mount} (${nas_source})${RESET}" >&2
+                return 1
+            fi
+            ;;
+    esac
+
     cd "$dir"
 
     if [[ -n "${STACK_FILES[$name]:-}" ]]; then

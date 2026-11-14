@@ -399,7 +399,9 @@ Used by `qbit.docker-compose.yml`, `arr.docker-compose.yml`, and `jellyfin.docke
 ```dotenv
 # Domain and shared media path
 TAILSCALE_DOMAIN=ts.example.com
-MEDIA_PATH=/media/huyen/MainDisk/media
+MEDIA_PATH=/path/to/local/nas/mount
+# Legacy GMKtec qBittorrent path; this stack stays stopped while qBittorrent runs on the NAS
+QBIT_MEDIA_PATH=/path/to/legacy/media
 
 # Gluetun / Private Internet Access
 VPN_USERNAME=replace-with-pia-username
@@ -437,6 +439,46 @@ Recommended internal media roots:
 /media/movies
 /media/downloads
 ```
+
+#### NAS media mount on the GMKtec
+
+Arr, Jellyfin, Books, and Homepage use the UGREEN NFS share mounted at
+`NAS_MEDIA_MOUNT` (`NAS_IP:NAS_MEDIA_EXPORT`). The NAS share contains `anime/`,
+`tv/`, `movies/`, and `books/` directly at its root; their container paths
+remain `/media/anime`, `/media/tv`, `/media/movies`, and `/media/books`.
+Set `NAS_IP`, `NAS_MEDIA_EXPORT`, and `NAS_MEDIA_MOUNT` in the ignored repo-root
+`.env`. Keep each stack's `MEDIA_PATH` / `JELLY_DATA_PATH` equal to
+`NAS_MEDIA_MOUNT`. `./dcm.sh up` checks the configured NFS mount before
+starting any of these stacks.
+
+The current NFSv3 mount was made manually and will disappear after reboot.
+To persist it, add this entry to `/etc/fstab` (as root), then reload systemd
+and verify the mount before starting the containers:
+
+```fstab
+YOUR_NAS_IP:/path/to/nas/export /path/to/local/mount nfs vers=3,proto=tcp,_netdev,nofail,x-systemd.requires=network-online.target 0 0
+```
+
+```bash
+sudo systemctl daemon-reload
+findmnt --mountpoint /path/to/local/mount
+```
+
+Replace the IP, export, and local mount placeholders with the values from
+your ignored local `.env`. `/etc/fstab` does not expand `.env` variables.
+
+If the share is unavailable at boot, Docker's `restart: unless-stopped`
+containers can start before it mounts, regardless of the `dcm.sh` check.
+Arrange for Docker to wait for this mount at boot (for example, a systemd
+`RequiresMountsFor=/path/to/local/mount` dependency) before enabling automatic
+startup of NAS-backed containers. Do not start them against the empty local
+mount-point directory.
+
+qBittorrent runs separately on the NAS. Do not start the GMKtec `qbit` stack:
+its `QBIT_MEDIA_PATH` still points to the disconnected MainDisk. Arr can scan
+the copied NAS libraries, but leave its qBittorrent download-client integration
+disabled until the RAID 1 to RAID 5 upgrade is complete and the NAS download
+path is confirmed. Preserve the existing `/media` paths inside Arr containers.
 
 ### `nextcloud/.env.example`
 
